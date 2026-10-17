@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RitmoPro — Panel Interactivo de Seguimiento de Hábitos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Smooth Transitions & Scrollbar */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(148, 163, 184, 0.08);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+
+        /* Animations for Checkboxes and Streaks */
+        @keyframes checkPop {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.16); }
+            100% { transform: scale(1); }
+        }
+        .animate-check-pop {
+            animation: checkPop 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes flamePulse {
+            0%, 100% { transform: scale(1) rotate(-2deg); filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.4)); }
+            50% { transform: scale(1.1) rotate(2deg); filter: drop-shadow(0 0 12px rgba(249, 115, 22, 0.75)); }
+        }
+        .flame-active {
+            animation: flamePulse 2.2s infinite ease-in-out;
+        }
+
+        /* Progress Bar Transition */
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        /* Glassmorphism cards */
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        /* Confetti Canvas Pointer Events */
+        #confettiCanvas {
+            pointer-events: none;
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white">
+
+    <!-- Celebration Confetti Canvas -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- Background Decorative Ambient Glows -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-500/15 rounded-full blur-3xl"></div>
+        <div class="absolute top-1/3 -right-24 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-500/10 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 left-1/3 w-96 h-96 bg-amber-500/10 dark:bg-amber-500/10 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+        <!-- TOP HEADER & NAVIGATION -->
+        <header class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white/80 dark:bg-slate-900/80 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-4 sm:p-6 shadow-sm">
+            <!-- Brand & Subtitle -->
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/25 shrink-0">
+                    <i class="ph-fill ph-fire text-2xl flame-active"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-indigo-800 to-slate-900 dark:from-white dark:via-indigo-200 dark:to-white">
+                            RitmoPro
+                        </h1>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            Hábitos & Rachas
+                        </span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                        Construye disciplina diaria, visualiza tu consistencia y supera tu mejor racha.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Controls: Week Selector, Audio, Theme, New Habit CTA -->
+            <div class="flex flex-wrap items-center justify-between lg:justify-end gap-2.5 sm:gap-3">
+                <!-- Week Switcher -->
+                <div class="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/70 dark:border-slate-700/70">
+                    <button id="prevWeekBtn" title="Semana anterior" class="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+                        <i class="ph-bold ph-caret-left text-sm"></i>
+                    </button>
+                    <div class="px-3 text-center min-w-[155px]">
+                        <span id="weekLabelTitle" class="block text-[10px] uppercase tracking-wider font-bold text-indigo-600 dark:text-indigo-400">Esta Semana</span>
+                        <span id="weekDateRange" class="block text-xs font-semibold text-slate-700 dark:text-slate-200">Lunes - Domingo</span>
+                    </div>
+                    <button id="nextWeekBtn" title="Semana siguiente" class="p-2 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition disabled:opacity-30 disabled:pointer-events-none">
+                        <i class="ph-bold ph-caret-right text-sm"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <!-- Sound Toggle -->
+                    <button id="soundToggleBtn" title="Efectos de sonido" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/70 transition">
+                        <i id="soundIcon" class="ph-fill ph-speaker-high text-lg text-indigo-500"></i>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button id="themeToggleBtn" title="Cambiar tema claro/oscuro" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/90 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/70 transition">
+                        <i id="themeIcon" class="ph-fill ph-sun text-lg text-amber-400"></i>
+                    </button>
+
+                    <!-- Add New Habit Button -->
+                    <button id="openAddModalBtn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-semibold px-4 py-2.5 rounded-xl shadow-md shadow-indigo-500/25 transition text-sm">
+                        <i class="ph-bold ph-plus-circle text-lg"></i>
+                        <span>Nuevo Hábito</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI SUMMARY CARDS -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Card 1: Weekly Completion Rate -->
+            <div class="bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                <div class="space-y-1">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Progreso Semanal</span>
+                    <div class="flex items-baseline gap-2">
+                        <h2 id="kpiWeeklyPercent" class="text-3xl font-extrabold font-display text-slate-900 dark:text-white">0%</h2>
+                        <span id="kpiWeeklyFraction" class="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">0/0 metas</span>
+                    </div>
+                    <p id="kpiWeeklySubtitle" class="text-xs text-slate-500 dark:text-slate-400">Cumplimiento sobre objetivo</p>
+                </div>
+                <!-- SVG Circular Ring -->
+                <div class="relative w-16 h-16 shrink-0 flex items-center justify-center">
+                    <svg class="w-16 h-16" viewBox="0 0 64 64">
+                        <circle class="text-slate-200 dark:text-slate-800" stroke-width="6" stroke="currentColor" fill="transparent" r="26" cx="32" cy="32"/>
+                        <circle id="kpiWeeklyRing" class="text-indigo-500 progress-ring-circle" stroke-width="6" stroke-dasharray="163.36" stroke-dashoffset="163.36" stroke-linecap="round" stroke="currentColor" fill="transparent" r="26" cx="32" cy="32"/>
+                    </svg>
+                    <i class="ph-fill ph-chart-donut text-xl text-indigo-500 absolute"></i>
+                </div>
+            </div>
+
+            <!-- Card 2: Today's Focus -->
+            <div class="bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Metas de Hoy (<span id="kpiTodayDayName">Hoy</span>)</span>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <h2 id="kpiTodayCount" class="text-3xl font-extrabold font-display text-slate-900 dark:text-white">0 / 0</h2>
+                            <span id="kpiTodayBadge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400">En curso</span>
+                        </div>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                        <i class="ph-fill ph-check-square-offset text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div id="kpiTodayBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Active Streak Leader -->
+            <div class="bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                <div class="space-y-1 pr-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Mayor Racha Activa</span>
+                    <div class="flex items-baseline gap-2">
+                        <h2 id="kpiCurrentStreak" class="text-3xl font-extrabold font-display text-orange-500">0 días</h2>
+                    </div>
+                    <p id="kpiCurrentStreakHabit" class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[180px]">Sin rachas activas</p>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 shrink-0">
+                    <i class="ph-fill ph-fire text-3xl flame-active"></i>
+                </div>
+            </div>
+
+            <!-- Card 4: All-Time Best Streak & Perfect Days -->
+            <div class="bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm flex items-center justify-between">
+                <div class="space-y-1 pr-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">Mejor Racha Histórica</span>
+                    <div class="flex items-baseline gap-2">
+                        <h2 id="kpiBestStreak" class="text-3xl font-extrabold font-display text-amber-500">0 días</h2>
+                        <span id="kpiPerfectDaysBadge" class="text-xs font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">0 días 100%</span>
+                    </div>
+                    <p id="kpiBestStreakHabit" class="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[180px]">Récord personal</p>
+                </div>
+                <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+                    <i class="ph-fill ph-trophy text-3xl"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- HABIT MATRIX SECTION (LUNES A DOMINGO) -->
+        <section class="bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl shadow-sm overflow-hidden">
+            
+            <!-- Toolbar: Category Filters, Search & Quick Actions -->
+            <div class="p-4 sm:p-6 border-b border-slate-200/80 dark:border-slate-800/80 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <!-- Category Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="categoryFilterContainer">
+                    <!-- Populated via JS -->
+                </div>
+
+                <!-- Right Controls: Search & Quick Actions -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="relative flex-1 sm:flex-initial sm:w-56">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input id="searchHabitInput" type="text" placeholder="Buscar hábito o meta..." class="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-800 dark:text-slate-100 placeholder-slate-400">
+                    </div>
+
+                    <button id="completeAllTodayBtn" title="Marcar todos los hábitos de hoy como cumplidos" class="text-xs font-semibold px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5 transition">
+                        <i class="ph-bold ph-checks"></i>
+                        <span class="hidden sm:inline">Completar Hoy</span>
+                    </button>
+
+                    <button id="resetDemoDataBtn" title="Restaurar hábitos de demostración" class="text-xs font-semibold px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700 transition flex items-center gap-1.5">
+                        <i class="ph-bold ph-arrows-counter-clockwise"></i>
+                        <span class="hidden sm:inline">Datos Demo</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Responsive Matrix Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[820px]">
+                    <thead>
+                        <tr class="border-b border-slate-200/80 dark:border-slate-800/80 bg-slate-50/70 dark:bg-slate-950/40 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                            <th class="py-3.5 pl-6 pr-3 w-[280px]">Hábito / Meta Diaria</th>
+                            <!-- Days Headers Lunes to Domingo injected via JS -->
+                            <th id="dayHeader-0" class="py-3.5 px-2 text-center w-14">Lun</th>
+                            <th id="dayHeader-1" class="py-3.5 px-2 text-center w-14">Mar</th>
+                            <th id="dayHeader-2" class="py-3.5 px-2 text-center w-14">Mié</th>
+                            <th id="dayHeader-3" class="py-3.5 px-2 text-center w-14">Jue</th>
+                            <th id="dayHeader-4" class="py-3.5 px-2 text-center w-14">Vie</th>
+                            <th id="dayHeader-5" class="py-3.5 px-2 text-center w-14">Sáb</th>
+                            <th id="dayHeader-6" class="py-3.5 px-2 text-center w-14">Dom</th>
+                            <th class="py-3.5 px-3 text-center w-36">Rachas</th>
+                            <th class="py-3.5 px-4 w-44">Progreso Semanal</th>
+                            <th class="py-3.5 pl-2 pr-6 text-right w-24">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="habitsTableBody" class="divide-y divide-slate-200/60 dark:divide-slate-800/70 text-sm">
+                        <!-- Dynamic Habit Rows Rendered Here -->
+                    </tbody>
+                    <!-- Daily Totals Footer -->
+                    <tfoot class="border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/90 dark:bg-slate-950/60">
+                        <tr id="dailySummaryRow">
+                            <!-- Rendered dynamically via JS -->
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Empty State (hidden when habits exist) -->
+            <div id="emptyHabitsState" class="hidden py-14 px-4 text-center">
+                <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 mx-auto mb-3">
+                    <i class="ph-duotone ph-sparkle text-3xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">No se encontraron hábitos en esta vista</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-5">
+                    Agrega una nueva meta diaria o cambia el filtro de categoría para comenzar a registrar tu progreso semanal.
+                </p>
+                <button id="emptyStateAddBtn" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2.5 rounded-xl text-sm shadow-md shadow-indigo-500/20 transition">
+                    <i class="ph-bold ph-plus"></i>
+                    <span>Crear mi primer hábito</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- INTERACTIVE CHARTS & STREAK ANALYTICS SECTION -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Chart 1: Weekly Completion & Daily Rhythm (7 cols) -->
+            <div class="lg:col-span-7 bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <i class="ph-fill ph-chart-bar text-indigo-500 text-xl"></i>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                                Ritmo de Cumplimiento Diario (Lunes a Domingo)
+                            </h3>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Porcentaje de hábitos completados cada día de la semana seleccionada. Pasa el cursor o toca cada barra para ver el detalle.
+                        </p>
+                    </div>
+                    <!-- Chart Mode Switcher -->
+                    <div class="inline-flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 self-start">
+                        <button id="chartModeBarsBtn" class="px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm transition">
+                            Barras
+                        </button>
+                        <button id="chartModeAreaBtn" class="px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+                            Tendencia
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Interactive SVG Container for Weekly Rhythm -->
+                <div class="relative w-full h-64 select-none" id="weeklyChartContainer">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+
+                <!-- Bottom Insight Banner -->
+                <div class="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                        <span id="bestDayInsight">Mejor día de la semana: Calculando...</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3 h-0.5 bg-indigo-500 inline-block"></span> Meta Ideal (80%+)
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart 2: Streak Comparison (Current vs Best Streak per Habit) (5 cols) -->
+            <div class="lg:col-span-5 bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-fill ph-flame text-orange-500 text-xl"></i>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                                Ranking de Rachas por Hábito
+                            </h3>
+                        </div>
+                        <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20">
+                            Actual vs. Récord
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                        Comparativa directa entre tu racha consecutiva actual y tu mejor marca histórica.
+                    </p>
+
+                    <!-- Interactive Horizontal Streak Bars -->
+                    <div id="streakComparisonContainer" class="space-y-3.5 max-h-[250px] overflow-y-auto pr-1">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-4">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-gradient-to-r from-orange-500 to-amber-500 inline-block"></span>
+                            Racha Actual
+                        </span>
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded bg-slate-200 dark:bg-slate-700 inline-block"></span>
+                            Mejor Racha Histórica
+                        </span>
+                    </div>
+                    <span id="streakRecordCountText" class="font-semibold text-amber-600 dark:text-amber-400"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CATEGORY DISTRIBUTION & CONSISTENCY HEATMAP SECTION -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Category Progress Breakdown (5 cols) -->
+            <div class="lg:col-span-5 bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-sm">
+                <div class="flex items-center gap-2 mb-1">
+                    <i class="ph-fill ph-shapes text-purple-500 text-xl"></i>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                        Equilibrio por Categorías
+                    </h3>
+                </div>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">
+                    Distribución del cumplimiento semanal según el área de enfoque de tus metas.
+                </p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                    <!-- SVG Multi-Segment Donut Chart -->
+                    <div class="relative flex items-ce justify-center mx-auto w-44 h-44" id="categoryDonutContainer">
+                        <!-- Populated via JS -->
+                    </div>
+                    <!-- Category Legend & Progress List -->
+                    <div id="categoryBreakdownList" class="space-y-3">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4-Week Consistency Overview & Coach Insights (7 cols) -->
+            <div class="lg:col-span-7 bg-white/90 dark:bg-slate-900/90 glass-panel border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <div class="flex items-center gap-2">
+                            <i class="ph-fill ph-calendar-check text-emerald-500 text-xl"></i>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                                Mapa de Calor de Consistencia (Últimas 4 Semanas)
+                            </h3>
+                        </div>
+                        <span id="consistencyScoreBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            Nivel Excelente
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                        Historial de intensidad diaria en los últimos 28 días. Haz clic en cualquier semana en el selector superior para editar semanas pasadas.
+                    </p>
+
+                    <!-- 28-Day Heatmap Grid -->
+                    <div id="heatmapGridContainer" class="grid grid-cols-7 gap-2 pt-1">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Smart Coach Feedback Card -->
+                <div class="mt-5 p-4 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-emerald-500/10 border border-indigo-500/20 flex items-start gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <i class="ph-fill ph-lightbulb-filament text-xl"></i>
+                    </div>
+                    <div class="text-xs sm:text-sm">
+                        <h4 class="font-bold text-slate-900 dark:text-white" id="coachHeadline">Diagnóstico de Consistencia</h4>
+                        <p class="text-slate-600 dark:text-slate-300 mt-0.5 leading-relaxed" id="coachMessage">
+                            Analizando tus patrones de cumplimiento semanal...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer class="text-center text-xs text-slate-400 dark:text-slate-500 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-200/60 dark:border-slate-800/60">
+            <div class="flex items-center gap-2">
+                <i class="ph-fill ph-shield-check text-emerald-500"></i>
+                <span>Tus datos se guardan automáticamente en tu navegador (localStorage).</span>
+            </div>
+            <div>
+                <span>RitmoPro • Panel de Hábitos & Rachas Semanales</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: ADD / EDIT HABIT                                           -->
+    <!-- ================================================================= -->
+    <div id="habitModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl transform transition-all max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
+                        <i id="modalHeaderIcon" class="ph-bold ph-plus-circle text-xl"></i>
+                    </div>
+                    <h3 id="modalTitle" class="text-lg font-bold text-slate-900 dark:text-white">Nuevo Hábito Diario</h3>
+                </div>
+                <button id="closeHabitModalBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i class="ph-bold ph-x text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Quick Preset Templates -->
+            <div id="quickPresetsSection" class="mt-4">
+                <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                    Plantillas Rápidas (1 clic)
+                </span>
+                <div class="flex flex-wrap gap-1.5" id="presetButtonsContainer">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+
+            <form id="habitForm" class="mt-4 space-y-4">
+                <input type="hidden" id="habitIdInput" value="">
+
+                <!-- Habit Name -->
+                <div>
+                    <label for="habitNameInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                        Nombre del Hábito *
+                    </label>
+                    <input id="habitNameInput" type="text" required maxlength="48" placeholder="Ej. Leer 20 páginas, Entrenamiento de fuerza..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <!-- Daily Goal / Target Description & Category -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div>
+                        <label for="habitTargetNoteInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                            Meta Diaria / Detalle
+                        </label>
+                        <input id="habitTargetNoteInput" type="text" maxlength="35" placeholder="Ej. 30 min, 2 Litros, Sin azúcar" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label for="habitCategorySelect" class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                            Categoría
+                        </label>
+                        <select id="habitCategorySelect" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Salud">Salud & Bienestar</option>
+                            <option value="Deporte">Deporte & Energía</option>
+                            <option value="Mente">Mente & Estudio</option>
+                            <option value="Productividad">Productividad</option>
+                            <option value="Finanzas">Finanzas</option>
+                            <option value="Creatividad">Creatividad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Weekly Target Days (1 to 7 days/week) -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                            Frecuencia Objetivo Semanal
+                        </label>
+                        <span id="frequencyValueLabel" class="text-xs font-bold text-indigo-600 dark:text-indigo-400">7 días / semana (Diario)</span>
+                    </div>
+                    <input id="habitGoalDaysInput" type="range" min="1" max="7" value="7" class="w-full accent-indigo-600 cursor-pointer">
+                    <div class="flex justify-between text-[10px] text-slate-400 font-semibold px-1">
+                        <span>1 día</span>
+                        <span>2 días</span>
+                        <span>3 días</span>
+                        <span>4 días</span>
+                        <span>5 días</span>
+                        <span>6 días</span>
+                        <span>7 días</span>
+                    </div>
+                </div>
+
+                <!-- Icon Picker -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                        Selecciona un Ícono
+                    </label>
+                    <div id="iconPickerContainer" class="grid grid-cols-8 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Color Picker -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                        Color de Identidad
+                    </label>
+                    <div id="colorPickerContainer" class="flex items-center gap-3">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Form Error Feedback -->
+                <p id="habitFormError" class="hidden text-xs font-semibold text-rose-500"></p>
+
+                <!-- Submit & Cancel Buttons -->
+                <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
+                    <button type="button" id="cancelHabitModalBtn" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-500/25 transition flex items-center gap-2">
+                        <i class="ph-bold ph-check"></i>
+                        <span id="saveHabitBtnText">Guardar Hábito</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MODAL: CONFIRM DELETE / RESET (Custom Modal - No native confirm)  -->
+    <!-- ================================================================= -->
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 flex items-center justify-center shrink-0">
+                    <i class="ph-fill ph-warning-circle text-2xl"></i>
+                </div>
+                <div>
+                    <h3 id="confirmModalTitle" class="text-lg font-bold text-slate-900 dark:text-white">¿Eliminar este hábito?</h3>
+                    <p id="confirmModalMessage" class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        Esta acción eliminará el hábito y su historial de rachas semanales.
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2.5 mt-6">
+                <button id="cancelConfirmModalBtn" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    Cancelar
+                </button>
+                <button id="acceptConfirmModalBtn" class="px-4 py-2 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-500/20 transition">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- TOAST NOTIFICATION                                                -->
+    <!-- ================================================================= -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ================================================================= -->
+    <!-- APPLICATION LOGIC (JAVASCRIPT)                                    -->
+    <!-- ================================================================= -->
+    <script>
+        /**
+         * RitmoPro — Panel Interactivo de Seguimiento de Hábitos
+         * Incluye soporte completo para múltiples semanas (Lunes a Domingo),
+         * cálculo automático de Racha Actual y Mejor Racha Histórica,
+         * gráficos interactivos SVG y persistencia en localStorage.
+         */
+
+        const STORAGE_KEY = 'ritmopro_habits_data_v1';
+        const SETTINGS_KEY = 'ritmopro_settings_v1';
+
+        const DAY_NAMES_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+        const DAY_NAMES_FULL = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const MONTH_NAMES_SHORT = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+        const CATEGORIES = [
+            { id: 'Todos', label: 'Todos', icon: 'ph-squares-four' },
+            { id: 'Salud', label: 'Salud', icon: 'ph-heart-beat' },
+            { id: 'Deporte', label: 'Deporte', icon: 'ph-barbell' },
+            { id: 'Mente', label: 'Mente', icon: 'ph-brain' },
+            { id: 'Productividad', label: 'Productividad', icon: 'ph-rocket-launch' },
+            { id: 'Finanzas', label: 'Finanzas', icon: 'ph-coins' },
+            { id: 'Creatividad', label: 'Creatividad', icon: 'ph-paint-brush' }
+        ];
+
+        const HABIT_ICONS = [
+            '💧', '🏃', '📚', '🧘', '🥗', '💪', '💤', '💻',
+            '🎯', '💰', '🎨', '🎸', '🍵', '☀️', '🧠', '🚴'
+        ];
+
+        const COLOR_PALETTES = {
+            emerald: {
+                name: 'Esmeralda',
+                hex: '#10b981',
+                bgLight: 'bg-emerald-500',
+                bgSoft: 'bg-emerald-500/15',
+                text: 'text-emerald-600 dark:text-emerald-400',
+                border: 'border-emerald-500/30',
+                ring: 'ring-emerald-500/40'
+            },
+            indigo: {
+                name: 'Índigo',
+                hex: '#6366f1',
+                bgLight: 'bg-indigo-500',
+                bgSoft: 'bg-indigo-500/15',
+                text: 'text-indigo-600 dark:text-indigo-400',
+                border: 'border-indigo-500/30',
+                ring: 'ring-indigo-500/40'
+            },
+            rose: {
+                name: 'Coral',
+                hex: '#f43f5e',
+                bgLight: 'bg-rose-500',
+                bgSoft: 'bg-rose-500/15',
+                text: 'text-rose-600 dark:text-rose-400',
+                border: 'border-rose-500/30',
+                ring: 'ring-rose-500/40'
+            },
+            amber: {
+                name: 'Ámbar',
+                hex: '#f59e0b',
+                bgLight: 'bg-amber-500',
+                bgSoft: 'bg-amber-500/15',
+                text: 'text-amber-600 dark:text-amber-400',
+                border: 'border-amber-500/30',
+                ring: 'ring-amber-500/40'
+            },
+            cyan: {
+                name: 'Cian',
+                hex: '#06b6d4',
+                bgLight: 'bg-cyan-500',
+                bgSoft: 'bg-cyan-500/15',
+                text: 'text-cyan-600 dark:text-cyan-400',
+                border: 'border-cyan-500/30',
+                ring: 'ring-cyan-500/40'
+            },
+            violet: {
+                name: 'Violeta',
+                hex: '#8b5cf6',
+                bgLight: 'bg-violet-500',
+                bgSoft: 'bg-violet-500/15',
+                text: 'text-violet-600 dark:text-violet-400',
+                border: 'border-violet-500/30',
+                ring: 'ring-violet-500/40'
+            }
+        };
+
+        const QUICK_PRESETS = [
+            { name: 'Hidratación consciente', note: '2.5 Litros de agua', category: 'Salud', icon: '💧', color: 'cyan', goalDays: 7 },
+            { name: 'Entrenamiento físico', note: '45 min fuerza / cardio', category: 'Deporte', icon: '💪', color: 'emerald', goalDays: 5 },
+            { name: 'Lectura enfocada', note: '20 páginas al día', category: 'Mente', icon: '📚', color: 'indigo', goalDays: 7 },
+            { name: 'Meditación y respiración', note: '15 min al despertar', category: 'Mente', icon: '🧘', color: 'violet', goalDays: 6 },
+            { name: 'Bloque de trabajo profundo', note: '90 min sin distracciones', category: 'Productividad', icon: '🎯', color: 'amber', goalDays: 5 },
+            { name: 'Registro de gastos', note: 'Cierre financiero diario', category: 'Finanzas', icon: '💰', color: 'rose', goalDays: 7 }
+        ];
+
+        // Application State
+        let state = {
+            habits: [],
+            weekOffset: 0, // 0 = Current week, -1 = Last week, etc.
+            selectedCategory: 'Todos',
+            searchQuery: '',
+            chartMode: 'bars', // 'bars' | 'area'
+            selectedIcon: '💧',
+            selectedColor: 'indigo',
+            soundEnabled: true,
+            darkMode: true
+        };
+
+        let confirmActionCallback = null;
+
+        // =================================================================
+        // DATE & WEEK HELPERS (Monday = 0 ... Sunday = 6)
+        // =================================================================
+
+        /**
+         * Returns a clean Date at local midnight
+         */
+        function getTodayMidnight() {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+
+        /**
+         * Formats a Date object as YYYY-MM-DD in local time
+         */
+        function formatDateKey(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        /**
+         * Gets the Monday of the week for a given reference date + weekOffset
+         */
+        function getMondayOfWeek(weekOffset = 0) {
+            const today = getTodayMidnight();
+            // JS getDay(): 0 is Sunday, 1 is Monday ... 6 is Saturday
+            const dayOfWeek = today.getDay();
+            const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(today);
+            monday.setDate(today.getDate() + diffToMonday + (weekOffset * 7));
+            return monday;
+        }
+
+        /**
+         * Returns an array of 7 Date objects (Monday through Sunday) for the requested weekOffset
+         */
+        function getWeekDates(weekOffset = 0) {
+            const monday = getMondayOfWeek(weekOffset);
+            const days = [];
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                days.push(d);
+            }
+            return days;
+        }
+
+        /**
+         * Gets Today's index within Monday(0)..Sunday(6)
+         */
+        function getTodayDayIndex() {
+            const jsDay = getTodayMidnight().getDay();
+            return jsDay === 0 ? 6 : jsDay - 1;
+        }
+
+        // =================================================================
+        // SOUND SYNTHESIZER (Web Audio API - No external files)
+        // =================================================================
+        let audioCtx = null;
+
+        function playSound(type = 'check') {
+            if (!state.soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const now = audioCtx.currentTime;
+
+                if (type === 'check') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.11);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'uncheck') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(420, now);
+                    osc.frequency.exponentialRampToValueAtTime(280, now + 0.09);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.5];
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                        gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.06 + 0.28);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.06);
+                        osc.stop(now + idx * 0.06 + 0.3);
+                    });
+                }
+            } catch (e) {
+                // Ignore audio errors if blocked by browser policy
+            }
+        }
+
+        // =================================================================
+        // CONFETTI CELEBRATION ENGINE
+        // =================================================================
+        function launchConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#6366f1', '#10b981', '#f59e0b', '#f43f5e', '#06b6d4', '#8b5cf6'];
+
+            for (let i = 0; i < 65; i++) {
+                particles.push({
+                    x: canvas.width / 2 + (Math.random() - 0.5) * 260,
+                    y: canvas.height * 0.35,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: -Math.random() * 10 - 4,
+                    size: Math.random() * 7 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    vr: (Math.random() - 0.5) * 10,
+                    alpha: 1
+                });
+            }
+
+            function animateConfetti() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                particles.forEach(p => {
+                    if (p.alpha <= 0) return;
+                    active = true;
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.35; // gravity
+                    p.rotation += p.vr;
+                    p.alpha -= 0.014;
+
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, p.alpha);
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                    ctx.restore();
+                });
+
+                if (active) {
+                    requestAnimationFrame(animateConfetti);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            requestAnimationFrame(animateConfetti);
+        }
+
+        // =================================================================
+        // DEFAULT DEMO DATA GENERATOR
+        // =================================================================
+        function generateDefaultDemoHabits() {
+            const today = getTodayMidnight();
+            const currentWeekDates = getWeekDates(0);
+            const prevWeekDates = getWeekDates(-1);
+            const twoWeeksAgoDates = getWeekDates(-2);
+            const threeWeeksAgoDates = getWeekDates(-3);
+
+            // Helper to build realistic completion map across recent weeks up to today
+            function buildHistory(pattern3W, pattern2W, pattern1W, patternCurr) {
+                const map = {};
+                threeWeeksAgoDates.forEach((d, idx) => {
+                    if (pattern3W[idx]) map[formatDateKey(d)] = true;
+                });
+                twoWeeksAgoDates.forEach((d, idx) => {
+                    if (pattern2W[idx]) map[formatDateKey(d)] = true;
+                });
+                prevWeekDates.forEach((d, idx) => {
+                    if (pattern1W[idx]) map[formatDateKey(d)] = true;
+                });
+                currentWeekDates.forEach((d, idx) => {
+                    if (d <= today && patternCurr[idx]) {
+                        map[formatDateKey(d)] = true;
+                    }
+                });
+                return map;
+            }
+
+            return [
+                {
+                    id: 'hab-1',
+                    name: 'Hidratación Óptima',
+                    targetNote: '2.5 Litros de agua al día',
+                    category: 'Salud',
+                    icon: '💧',
+                    color: 'cyan',
+                    goalDays: 7,
+                    completions: buildHistory(
+                        [1, 1, 1, 0, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 0],
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 0]
+                    )
+                },
+                {
+                    id: 'hab-2',
+                    name: 'Entrenamiento de Fuerza',
+                    targetNote: '45 min gimnasio o calistenia',
+                    category: 'Deporte',
+                    icon: '💪',
+                    color: 'emerald',
+                    goalDays: 5,
+                    completions: buildHistory(
+                        [1, 0, 1, 1, 0, 1, 0],
+                        [1, 1, 0, 1, 1, 1, 0],
+                        [1, 1, 1, 0, 1, 1, 0],
+                        [1, 1, 0, 1, 1, 1, 0]
+                    )
+                },
+                {
+                    id: 'hab-3',
+                    name: 'Lectura y Aprendizaje',
+                    targetNote: '20 páginas antes de dormir',
+                    category: 'Mente',
+                    icon: '📚',
+                    color: 'indigo',
+                    goalDays: 7,
+                    completions: buildHistory(
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 0, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 1, 0, 0]
+                    )
+                },
+                {
+                    id: 'hab-4',
+                    name: 'Meditación Mindfulness',
+                    targetNote: '15 min respiración consciente',
+                    category: 'Mente',
+                    icon: '🧘',
+                    color: 'violet',
+                    goalDays: 6,
+                    completions: buildHistory(
+                        [1, 0, 1, 1, 1, 0, 1],
+                        [1, 1, 1, 0, 1, 1, 1],
+                        [0, 1, 1, 1, 1, 1, 1],
+                        [1, 0, 1, 1, 1, 1, 0]
+                    )
+                },
+                {
+                    id: 'hab-5',
+                    name: 'Bloque de Enfoque Profundo',
+                    targetNote: '90 min sin notificaciones',
+                    category: 'Productividad',
+                    icon: '🎯',
+                    color: 'amber',
+                    goalDays: 5,
+                    completions: buildHistory(
+                        [1, 1, 1, 1, 1, 0, 0],
+                        [1, 1, 1, 0, 1, 0, 0],
+                        [1, 1, 1, 1, 1, 0, 0],
+                        [1, 1, 1, 1, 0, 0, 0]
+                    )
+                },
+                {
+                    id: 'hab-6',
+                    name: 'Control de Gastos y Ahorro',
+                    targetNote: 'Registrar movimientos del día',
+                    category: 'Finanzas',
+                    icon: '💰',
+                    color: 'rose',
+                    goalDays: 7,
+                    completions: buildHistory(
+                        [1, 1, 0, 1, 1, 1, 0],
+                        [1, 0, 1, 1, 1, 1, 1],
+                        [1, 1, 1, 1, 0, 1, 1],
+                        [1, 1, 1, 0, 1, 1, 0]
+                    )
+                }
+            ];
+        }
+
+        // =================================================================
+        // STREAK & PROGRESS CALCULATION ENGINE
+        // =================================================================
+
+        /**
+         * Calculates both Current Streak and Best Historical Streak for a habit.
+         * Also considers completions recorded across the currently viewed week!
+         */
+        function calculateHabitStreaks(habit) {
+            const completions = habit.completions || {};
+            const completedKeys = Object.keys(completions).filter(k => completions[k] === true).sort();
+
+            if (completedKeys.length === 0) {
+                return { currentStreak: 0, bestStreak: 0 };
+            }
+
+            // 1. Calculate Best Streak across all recorded dates
+            let bestStreak = 1;
+            let runningStreak = 1;
+
+            for (let i = 1; i < completedKeys.length; i++) {
+                const prevParts = completedKeys[i - 1].split('-').map(Number);
+                const currParts = completedKeys[i].split('-').map(Number);
+                const prevDate = new Date(prevParts[0], prevParts[1] - 1, prevParts[2]);
+                const currDate = new Date(currParts[0], currParts[1] - 1, currParts[2]);
+
+                const diffDays = Math.round((currDate - prevDate) / (1000 * 60 * 60 * 24));
+                if (diffDays === 1) {
+                    runningStreak++;
+                    if (runningStreak > bestStreak) bestStreak = runningStreak;
+                } else if (diffDays > 1) {
+                    runningStreak = 1;
+                }
+            }
+
+            // 2. Calculate Current Streak anchored to Today (or latest completed day in current week if user marked ahead)
+            const today = getTodayMidnight();
+            const todayKey = formatDateKey(today);
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const yesterdayKey = formatDateKey(yesterday);
+
+            // Check if user marked future days in current week; if so, anchor to latest marked day in current week or today
+            const currentWeekDates = getWeekDates(0);
+            let anchorDate = null;
+
+            for (let i = 6; i >= 0; i--) {
+                const d = currentWeekDates[i];
+                const k = formatDateKey(d);
+                if (d > today && completions[k]) {
+                    anchorDate = d;
+                    break;
+                }
+            }
+
+            if (!anchorDate) {
+                if (completions[todayKey]) {
+                    anchorDate = today;
+                } else if (completions[yesterdayKey]) {
+                    anchorDate = yesterday;
+                }
+            }
+
+            let currentStreak = 0;
+            if (anchorDate) {
+                let cursor = new Date(anchorDate);
+                while (completions[formatDateKey(cursor)]) {
+                    currentStreak++;
+                    cursor.setDate(cursor.getDate() - 1);
+                }
+            }
+
+            if (currentStreak > bestStreak) {
+                bestStreak = currentStreak;
+            }
+
+            return { currentStreak, bestStreak };
+        }
+
+        /**
+         * Calculates weekly completion stats for a habit in the given weekDates
+         */
+        function getHabitWeeklyStats(habit, weekDates) {
+            let completedCount = 0;
+            const dayStates = weekDates.map(d => {
+                const isDone = Boolean(habit.completions && habit.completions[formatDateKey(d)]);
+                if (isDone) completedCount++;
+                return isDone;
+            });
+
+            const goalDays = habit.goalDays || 7;
+            const rawPercent = Math.round((completedCount / goalDays) * 100);
+            const cappedPercent = Math.min(100, rawPercent);
+
+            return {
+                completedCount,
+                goalDays,
+                rawPercent,
+                cappedPercent,
+                goalMet: completedCount >= goalDays,
+                dayStates
+            };
+        }
+
+        // =================================================================
+        // STORAGE PERSISTENCE
+        // =================================================================
+        function loadFromStorage() {
+            try {
+                const savedSettings = localStorage.getItem(SETTINGS_KEY);
+                if (savedSettings) {
+                    const parsedSettings = JSON.parse(savedSettings);
+                    state.darkMode = parsedSettings.darkMode !== undefined ? parsedSettings.darkMode : true;
+                    state.soundEnabled = parsedSettings.soundEnabled !== undefined ? parsedSettings.soundEnabled : true;
+                }
+
+                const savedHabits = localStorage.getItem(STORAGE_KEY);
+                if (savedHabits) {
+                    const parsed = JSON.parse(savedHabits);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        state.habits = parsed;
+                        return;
+                    }
+                }
+                state.habits = generateDefaultDemoHabits();
+                saveToStorage();
+            } catch (e) {
+                state.habits = generateDefaultDemoHabits();
+            }
+        }
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state.habits));
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify({
+                    darkMode: state.darkMode,
+                    soundEnabled: state.soundEnabled
+                }));
+            } catch (e) {
+                console.error('Error guardando en localStorage:', e);
+            }
+        }
+
+        // =================================================================
+        // UI TOAST NOTIFICATIONS
+        // =================================================================
+        function showToast(message, icon = 'ph-check-circle', colorClass = 'text-emerald-400') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = 'flex items-center gap-2.5 bg-slate-900 dark:bg-slate-800 text-white border border-slate-700/80 px-4 py-3 rounded-xl shadow-xl text-xs sm:text-sm font-medium transform translate-y-2 opacity-0 transition-all duration-300 pointer-events-auto';
+            toast.innerHTML = `
+                <i class="ph-fill ${icon} text-lg ${colorClass}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 2600);
+        }
+
+        // =================================================================
+        // RENDER FUNCTIONS
+        // =================================================================
+
+        function applyThemeAndSettingsUI() {
+            const htmlEl = document.documentElement;
+            const themeIcon = document.getElementById('themeIcon');
+            if (state.darkMode) {
+                htmlEl.classList.add('dark');
+                themeIcon.className = 'ph-fill ph-sun text-lg text-amber-400';
+            } else {
+                htmlEl.classList.remove('dark');
+                themeIcon.className = 'ph-fill ph-moon-stars text-lg text-indigo-600';
+            }
+
+            const soundIcon = document.getElementById('soundIcon');
+            if (state.soundEnabled) {
+                soundIcon.className = 'ph-fill ph-speaker-high text-lg text-indigo-500';
+            } else {
+                soundIcon.className = 'ph ph-speaker-slash text-lg text-slate-400';
+            }
+        }
+
+        /**
+         * Updates the Week Navigation bar and Table Column Headers (Lunes a Domingo)
+         */
+        function renderWeekHeader(weekDates) {
+            const firstDay = weekDates[0];
+            const lastDay = weekDates[6];
+            const today = getTodayMidnight();
+            const todayKey = formatDateKey(today);
+
+            const weekLabelTitle = document.getElementById('weekLabelTitle');
+            const weekDateRange = document.getElementById('weekDateRange');
+            const nextWeekBtn = document.getElementById('nextWeekBtn');
+
+            if (state.weekOffset === 0) {
+                weekLabelTitle.textContent = 'Semana Actual';
+                weekLabelTitle.className = 'block text-[10px] uppercase tracking-wider font-bold text-indigo-600 dark:text-indigo-400';
+            } else if (state.weekOffset === -1) {
+                weekLabelTitle.textContent = 'Semana Pasada';
+                weekLabelTitle.className = 'block text-[10px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-400';
+            } else {
+                weekLabelTitle.textContent = `Hace ${Math.abs(state.weekOffset)} Semanas`;
+                weekLabelTitle.className = 'block text-[10px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400';
+            }
+
+            const rangeStr = `${firstDay.getDate()} ${MONTH_NAMES_SHORT[firstDay.getMonth()]} - ${lastDay.getDate()} ${MONTH_NAMES_SHORT[lastDay.getMonth()]}`;
+            weekDateRange.textContent = rangeStr;
+
+            // Disable next week button if already on current week
+            nextWeekBtn.disabled = state.weekOffset >= 0;
+
+            // Update Table Day Headers (Lun .. Dom)
+            weekDates.forEach((d, idx) => {
+                const th = document.getElementById(`dayHeader-${idx}`);
+                if (!th) return;
+                const isToday = formatDateKey(d) === todayKey;
+                th.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-1 px-1.5 rounded-xl transition ${isToday ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30' : ''}">
+                        <span class="text-[10px] font-bold uppercase">${DAY_NAMES_SHORT[idx]}</span>
+                        <span class="text-xs font-extrabold mt-0.5 ${isToday ? 'text-white' : 'text-slate-700 dark:text-slate-300'}">${d.getDate()}</span>
+                    </div>
+                `;
+            });
+        }
+
+        /**
+         * Renders Category Filter Pills
+         */
+        function renderCategoryFilters() {
+            const container = document.getElementById('categoryFilterContainer');
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = state.selectedCategory === cat.id;
+                const count = cat.id === 'Todos'
+                    ? state.habits.length
+                    : state.habits.filter(h => h.category === cat.id).length;
+
+                return `
+                    <button
+                        data-category="${cat.id}"
+                        class="category-pill shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition border ${
+                            isActive
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/20'
+                                : 'bg-slate-100/90 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 border-slate-200/70 dark:border-slate-700/70 hover:bg-slate-200/70 dark:hover:bg-slate-700'
+                        }"
+                    >
+                        <i class="ph-bold ${cat.icon}"></i>
+                        <span>${cat.label}</span>
+                        <span class="text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}">${count}</span>
+                    </button>
+                `;
+            }).join('');
+
+            container.querySelectorAll('.category-pill').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.selectedCategory = btn.getAttribute('data-category');
+                    renderDashboard();
+                });
+            });
+        }
+
+        /**
+         * Renders Top 4 KPI Cards
+         */
+        function renderKPICards(weekDates) {
+            const today = getTodayMidnight();
+            const todayKey = formatDateKey(today);
+            const todayIndex = getTodayDayIndex();
+
+            // 1. Weekly Completion Rate
+            let totalCompletedThisWeek = 0;
+            let totalGoalThisWeek = 0;
+
+            state.habits.forEach(habit => {
+                const stats = getHabitWeeklyStats(habit, weekDates);
+                totalCompletedThisWeek += stats.completedCount;
+                totalGoalThisWeek += stats.goalDays;
+            });
+
+            const weeklyPercent = totalGoalThisWeek > 0
+                ? Math.min(100, Math.round((totalCompletedThisWeek / totalGoalThisWeek) * 100))
+                : 0;
+
+            document.getElementById('kpiWeeklyPercent').textContent = `${weeklyPercent}%`;
+            document.getElementById('kpiWeeklyFraction').textContent = `${totalCompletedThisWeek}/${totalGoalThisWeek} metas`;
+
+            // Animate SVG Ring (r=26 -> circumference = 163.36)
+            const circumference = 163.36;
+            const offset = circumference - (weeklyPercent / 100) * circumference;
+            const ringEl = document.getElementById('kpiWeeklyRing');
+            if (ringEl) {
+                ringEl.style.strokeDashoffset = offset;
+            }
+
+            // 2. Today's Goals
+            const totalHabits = state.habits.length;
+            let completedToday = 0;
+            state.habits.forEach(h => {
+                if (h.completions && h.completions[todayKey]) completedToday++;
+            });
+
+            const todayPercent = totalHabits > 0 ? Math.round((completedToday / totalHabits) * 100) : 0;
+            document.getElementById('kpiTodayDayName').textContent = DAY_NAMES_FULL[todayIndex];
+            document.getElementById('kpiTodayCount').textContent = `${completedToday} / ${totalHabits}`;
+            document.getElementById('kpiTodayBar').style.width = `${todayPercent}%`;
+
+            const todayBadge = document.getElementById('kpiTodayBadge');
+            if (totalHabits > 0 && completedToday === totalHabits) {
+                todayBadge.textContent = '¡Día Perfecto!';
+                todayBadge.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+            } else if (completedToday > 0) {
+                todayBadge.textContent = `${todayPercent}% hoy`;
+                todayBadge.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400';
+            } else {
+                todayBadge.textContent = 'Pendiente';
+                todayBadge.className = 'text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400';
+            }
+
+            // 3. Active Streak Leader & Best Streak Leader
+            let maxCurrentStreak = 0;
+            let maxCurrentHabitName = 'Aún sin racha activa';
+            let maxBestStreak = 0;
+            let maxBestHabitName = 'Sin récords aún';
+
+            state.habits.forEach(h => {
+                const { currentStreak, bestStreak } = calculateHabitStreaks(h);
+                if (currentStreak > maxCurrentStreak) {
+                    maxCurrentStreak = currentStreak;
+                    maxCurrentHabitName = `${h.icon} ${h.name}`;
+                }
+                if (bestStreak > maxBestStreak) {
+                    maxBestStreak = bestStreak;
+                    maxBestHabitName = `${h.icon} ${h.name}`;
+                }
+            });
+
+            document.getElementById('kpiCurrentStreak').textContent = `${maxCurrentStreak} ${maxCurrentStreak === 1 ? 'día' : 'días'}`;
+            document.getElementById('kpiCurrentStreakHabit').textContent = maxCurrentHabitName;
+
+            document.getElementById('kpiBestStreak').textContent = `${maxBestStreak} ${maxBestStreak === 1 ? 'día' : 'días'}`;
+            document.getElementById('kpiBestStreakHabit').textContent = maxBestHabitName;
+
+            // Count how many days in the selected week achieved 100% completion across all habits
+            let perfectDaysInWeek = 0;
+            if (totalHabits > 0) {
+                weekDates.forEach(d => {
+                    const key = formatDateKey(d);
+                    const allDone = state.habits.every(h => h.completions && h.completions[key]);
+                    if (allDone) perfectDaysInWeek++;
+                });
+            }
+            document.getElementById('kpiPerfectDaysBadge').textContent = `${perfectDaysInWeek} ${perfectDaysInWeek === 1 ? 'día 100%' : 'días 100%'}`;
+        }
+
+        /**
+         * Renders the Interactive Habit Matrix (Rows + Checkboxes Lunes a Domingo)
+         */
+        function renderHabitsTable(weekDates) {
+            const tbody = document.getElementById('habitsTableBody');
+            const emptyState = document.getElementById('emptyHabitsState');
+            const tfootRow = document.getElementById('dailySummaryRow');
+            const todayKey = formatDateKey(getTodayMidnight());
+
+            // Filter habits by category and search query
+            const filteredHabits = state.habits.filter(h => {
+                const matchesCategory = state.selectedCategory === 'Todos' || h.category === state.selectedCategory;
+                const matchesSearch = h.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
+                    (h.targetNote && h.targetNote.toLowerCase().includes(state.searchQuery.toLowerCase()));
+                return matchesCategory && matchesSearch;
+            });
+
+            if (filteredHabits.length === 0) {
+                tbody.innerHTML = '';
+                tfootRow.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            tbody.innerHTML = filteredHabits.map(habit => {
+                const palette = COLOR_PALETTES[habit.color] || COLOR_PALETTES.indigo;
+                const stats = getHabitWeeklyStats(habit, weekDates);
+                const streaks = calculateHabitStreaks(habit);
+
+                const dayCellsHTML = weekDates.map((d, dayIdx) => {
+                    const dateKey = formatDateKey(d);
+                    const isCompleted = stats.dayStates[dayIdx];
+                    const isToday = dateKey === todayKey;
+
+                    return `
+                        <td class="py-3 px-1.5 text-center align-middle ${isToday ? 'bg-indigo-500/[0.04] dark:bg-indigo-500/[0.06]' : ''}">
+                            <button
+                                type="button"
+                                data-habit-id="${habit.id}"
+                                data-date-key="${dateKey}"
+                                title="${habit.name} — ${DAY_NAMES_FULL[dayIdx]} ${d.getDate()}"
+                                class="habit-check-btn w-10 h-10 rounded-xl mx-auto flex items-center justify-center transition-all duration-200 focus:outline-none ${
+                                    isCompleted
+                                        ? `${palette.bgLight} text-white shadow-md scale-100 hover:opacity-90`
+                                        : `bg-slate-100 dark:bg-slate-800/90 text-transparent hover:border-slate-300 dark:hover:border-slate-600 border ${
+                                            isToday ? 'border-indigo-400/60 dark:border-indigo-500/50' : 'border-slate-200/80 dark:border-slate-700/70'
+                                        }`
+                                }"
+                            >
+                                <i class="ph-bold ph-check text-lg ${isCompleted ? 'opacity-100' : 'opacity-0'}"></i>
+                            </button>
+                        </td>
+                    `;
+                }).join('');
+
+                return `
+                    <tr class="group hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition-colors">
+                        <!-- Habit Name, Icon & Category -->
+                        <td class="py-3.5 pl-6 pr-3 align-middle">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl ${palette.bgSoft} border ${palette.border} flex items-center justify-center text-xl shrink-0">
+                                    ${habit.icon}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-900 dark:text-white truncate">${escapeHTML(habit.name)}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-0.5">
+                                        <span class="text-[10px] font-semibold px-2 py-0.2 rounded-md ${palette.bgSoft} ${palette.text}">
+                                            ${escapeHTML(habit.category)}
+                                        </span>
+                                        <span class="text-xs text-slate-400 dark:text-slate-500 truncate">
+                                            ${escapeHTML(habit.targetNote || `Meta: ${habit.goalDays}d/sem`)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Monday to Sunday Checkboxes -->
+                        ${dayCellsHTML}
+
+                        <!-- Streaks Column (Current & Best) -->
+                        <td class="py-3.5 px-3 text-center align-middle">
+                            <div class="inline-flex items-center gap-2 bg-slate-100/90 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <div class="flex items-center gap-1" title="Racha Actual">
+                                    <i class="ph-fill ph-fire text-base ${streaks.currentStreak > 0 ? 'text-orange-500' : 'text-slate-400'}"></i>
+                                    <span class="font-extrabold text-xs ${streaks.currentStreak > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-400'}">${streaks.currentStreak}d</span>
+                                </div>
+                                <span class="text-slate-300 dark:text-slate-600">|</span>
+                                <div class="flex items-center gap-1" title="Mejor Racha Histórica">
+                                    <i class="ph-fill ph-trophy text-sm text-amber-500"></i>
+                                    <span class="font-bold text-xs text-slate-500 dark:text-slate-400">${streaks.bestStreak}d</span>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Weekly Progress Column -->
+                        <td class="py-3.5 px-4 align-middle">
+                            <div class="space-y-1.5">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">
+                                        ${stats.completedCount}/${stats.goalDays} días
+                                    </span>
+                                    <span class="font-bold ${stats.goalMet ? 'text-emerald-600 dark:text-emerald-400' : palette.text}">
+                                        ${stats.cappedPercent}%
+                                    </span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                    <div class="h-full ${stats.goalMet ? 'bg-emerald-500' : palette.bgLight} rounded-full transition-all duration-500" style="width: ${stats.cappedPercent}%"></div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Actions (Edit & Delete) -->
+                        <td class="py-3.5 pl-2 pr-6 text-right align-middle">
+                            <div class="inline-flex items-center gap-1 opacity-85 group-hover:opacity-100 transition">
+                                <button
+                                    type="button"
+                                    data-edit-id="${habit.id}"
+                                    title="Editar hábito"
+                                    class="edit-habit-btn p-2 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-500/10 transition"
+                                >
+                                    <i class="ph-bold ph-pencil-simple text-base"></i>
+                                </button>
+                                <button
+                                    type="button"
+                                    data-delete-id="${habit.id}"
+                                    title="Eliminar hábito"
+                                    class="delete-habit-btn p-2 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition"
+                                >
+                                    <i class="ph-bold ph-trash text-base"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Render Footer Summary Row (Daily Completion % across filtered habits)
+            const dayTotalsHTML = weekDates.map((d, idx) => {
+                const dateKey = formatDateKey(d);
+                const doneCount = filteredHabits.filter(h => h.completions && h.completions[dateKey]).length;
+                const pct = Math.round((doneCount / filteredHabits.length) * 100);
+                const isToday = dateKey === todayKey;
+
+                return `
+                    <td class="py-3 px-1 text-center ${isToday ? 'bg-indigo-500/[0.06]' : ''}">
+                        <span class="block text-xs font-extrabold ${pct === 100 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}">${pct}%</span>
+                        <span class="block text-[10px] text-slate-400">${doneCount}/${filteredHabits.length}</span>
+                    </td>
+                `;
+            }).join('');
+
+            tfootRow.innerHTML = `
+                <td class="py-3 pl-6 pr-3 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Cumplimiento Diario Total
+                </td>
+                ${dayTotalsHTML}
+                <td colspan="3" class="py-3 px-6 text-right text-xs text-slate-500 dark:text-slate-400">
+                    Haz clic en cualquier casilla para registrar o desmarcar tu meta diaria
+                </td>
+            `;
+
+            // Attach Event Listeners for Checkboxes
+            tbody.querySelectorAll('.habit-check-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const habitId = btn.getAttribute('data-habit-id');
+                    const dateKey = btn.getAttribute('data-date-key');
+                    toggleHabitCompletion(habitId, dateKey, btn);
+                });
+            });
+
+            // Attach Event Listeners for Edit
+            tbody.querySelectorAll('.edit-habit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const habitId = btn.getAttribute('data-edit-id');
+                    openHabitModal(habitId);
+                });
+            });
+
+            // Attach Event Listeners for Delete
+            tbody.querySelectorAll('.delete-habit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const habitId = btn.getAttribute('data-delete-id');
+                    promptDeleteHabit(habitId);
+                });
+            });
+        }
+
+        /**
+         * Renders Chart 1: Interactive Weekly Rhythm Chart (Bars or Area Trend)
+         */
+        function renderWeeklyRhythmChart(weekDates) {
+            const container = document.getElementById('weeklyChartContainer');
+            const bestDayInsight = document.getElementById('bestDayInsight');
+            const totalHabits = state.habits.length;
+            const todayKey = formatDateKey(getTodayMidnight());
+
+            const dailyData = weekDates.map((d, idx) => {
+                const key = formatDateKey(d);
+                let completed = 0;
+                const completedNames = [];
+                state.habits.forEach(h => {
+                    if (h.completions && h.completions[key]) {
+                        completed++;
+                        completedNames.push(`${h.icon} ${h.name}`);
+                    }
+                });
+                const percent = totalHabits > 0 ? Math.round((completed / totalHabits) * 100) : 0;
+                return {
+                    dayShort: DAY_NAMES_SHORT[idx],
+                    dayFull: DAY_NAMES_FULL[idx],
+                    dateNum: d.getDate(),
+                    completed,
+                    total: totalHabits,
+                    percent,
+                    isToday: key === todayKey,
+                    completedNames
+                };
+            });
+
+            // Update Best Day Insight
+            let bestDay = dailyData[0];
+            dailyData.forEach(d => {
+                if (d.percent > bestDay.percent) bestDay = d;
+            });
+
+            if (totalHabits === 0 || bestDay.completed === 0) {
+                bestDayInsight.textContent = 'Registra tus primeros hábitos de la semana para ver tu mejor día.';
+            } else {
+                bestDayInsight.innerHTML = `Mejor día de la semana: <strong class="text-slate-800 dark:text-white">${bestDay.dayFull} (${bestDay.percent}% • ${bestDay.completed}/${bestDay.total} hábitos)</strong>`;
+            }
+
+            if (state.chartMode === 'bars') {
+                // Interactive Bar Chart Layout with Tooltips
+                container.innerHTML = `
+                    <div class="relative w-full h-full flex flex-col justify-between pt-6 pb-2">
+                        <!-- 80% Target Dashed Line -->
+                        <div class="absolute left-0 right-0 border-t-2 border-dashed border-indigo-500/35 pointer-events-none flex items-center justify-end pr-2" style="bottom: 76%;">
+                            <span class="text-[10px] font-bold text-indigo-500 bg-white/90 dark:bg-slate-900/90 px-1.5 rounded -mt-2.5">Meta 80%</span>
+                        </div>
+
+                        <!-- Bars Row -->
+                        <div class="flex-1 grid grid-cols-7 gap-2 sm:gap-4 items-end px-2 z-10">
+                            ${dailyData.map(d => {
+                                const barColor = d.percent === 100
+                                    ? 'from-emerald-500 to-teal-400 shadow-emerald-500/20'
+                                    : d.percent >= 70
+                                        ? 'from-indigo-600 to-indigo-400 shadow-indigo-500/20'
+                                        : d.percent > 0
+                                            ? 'from-amber-500 to-orange-400 shadow-amber-500/20'
+                                            : 'from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-800';
+
+                                const barHeight = Math.max(8, d.percent);
+                                const tooltipList = d.completedNames.length > 0
+                                    ? d.completedNames.slice(0, 4).join(', ') + (d.completedNames.length > 4 ? '...' : '')
+                                    : 'Sin hábitos registrados';
+
+                                return `
+                                    <div class="group relative flex flex-col items-center h-full justify-end">
+                                        <!-- Hover Tooltip -->
+                                        <div class="opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 absolute -top-8 z-30 bg-slate-900 dark:bg-slate-800 text-white text-[11px] rounded-xl py-2 px-3 shadow-xl border border-slate-700 w-44 text-center transform -translate-y-2">
+                                            <div class="font-bold text-indigo-300">${d.dayFull} ${d.dateNum}</div>
+                                            <div class="font-extrabold text-sm text-white">${d.percent}% (${d.completed}/${d.total})</div>
+                                            <div class="text-[10px] text-slate-300 truncate mt-0.5">${escapeHTML(tooltipList)}</div>
+                                        </div>
+
+                                        <!-- Percentage Label Above Bar -->
+                                        <span class="text-[11px] font-extrabold mb-1.5 ${d.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}">
+                                            ${d.percent}%
+                                        </span>
+
+                                        <!-- Bar Track -->
+                                        <div class="w-full max-w-[44px] h-40 bg-slate-100 dark:bg-slate-800/70 rounded-xl p-1 flex items-end overflow-hidden border ${d.isToday ? 'border-indigo-500/50 ring-2 ring-indigo-500/20' : 'border-transparent'}">
+                                            <div
+                                                class="w-full rounded-lg bg-gradient-to-t ${barColor} shadow-md transition-all duration-500 group-hover:brightness-110"
+                                                style="height: ${barHeight}%"
+                                            ></div>
+                                        </div>
+
+                                        <!-- Day Name Label -->
+                                        <div class="mt-2 text-center">
+                                            <span class="block text-xs font-bold ${d.isToday ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}">${d.dayShort}</span>
+                                            <span class="block text-[10px] text-slate-400">${d.completed}/${d.total}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Smooth SVG Area & Line Trend Chart
+                const width = 640;
+                const height = 210;
+                const padLeft = 36;
+                const padRight = 24;
+                const padTop = 24;
+                const padBottom = 38;
+                const usableW = width - padLeft - padRight;
+                const usableH = height - padTop - padBottom;
+
+                const points = dailyData.map((d, i) => {
+                    const x = padLeft + (i / 6) * usableW;
+                    const y = padTop + usableH - (d.percent / 100) * usableH;
+                    return { x, y, ...d };
+                });
+
+                const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+                const areaPath = `${linePath} L ${points[6].x.toFixed(1)} ${(padTop + usableH).toFixed(1)} L ${points[0].x.toFixed(1)} ${(padTop + usableH).toFixed(1)} Z`;
+                const target80Y = padTop + usableH - 0.8 * usableH;
+
+                container.innerHTML = `
+                    <svg viewBox="0 0 ${width} ${height}" class="w-full h-full overflow-visible">
+                        <defs>
+                            <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="#6366f1" stop-opacity="0.42"/>
+                                <stop offset="100%" stop-color="#10b981" stop-opacity="0.02"/>
+                            </linearGradient>
+                        </defs>
+
+                        <!-- Horizontal Grid Lines -->
+                        ${[0, 50, 80, 100].map(val => {
+                            const y = padTop + usableH - (val / 100) * usableH;
+                            const isTarget = val === 80;
+                            return `
+                                <line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}"
+                                    stroke="${isTarget ? '#6366f1' : 'currentColor'}"
+                                    class="${isTarget ? 'opacity-50' : 'text-slate-200 dark:text-slate-800'}"
+                                    stroke-width="1"
+                                    ${isTarget ? 'stroke-dasharray="4 4"' : ''}
+                                />
+                                <text x="${padLeft - 8}" y="${y + 4}" text-anchor="end" class="text-[10px] fill-slate-400 font-semibold">${val}%</text>
+                            `;
+                        }).join('')}
+
+                        <!-- Area Fill -->
+                        <path d="${areaPath}" fill="url(#areaGrad)" />
+
+                        <!-- Trend Line -->
+                        <path d="${linePath}" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                        <!-- Interactive Nodes & Labels -->
+                        ${points.map(p => `
+                            <g class="group cursor-pointer">
+                                <circle cx="${p.x}" cy="${p.y}" r="${p.isToday ? 7 : 5}" class="${p.percent === 100 ? 'fill-emerald-500' : 'fill-indigo-500'} stroke-white dark:stroke-slate-900" stroke-width="2.5" />
+                                <text x="${p.x}" y="${p.y - 11}" text-anchor="middle" class="text-[11px] font-bold fill-slate-700 dark:fill-slate-200">${p.percent}%</text>
+                                <text x="${p.x}" y="${height - 12}" text-anchor="middle" class="text-[11px] font-bold ${p.isToday ? 'fill-indigo-500' : 'fill-slate-500 dark:fill-slate-400'}">${p.dayShort}</text>
+                            </g>
+                        `).join('')}
+                    </svg>
+                `;
+            }
+        }
+
+        /**
+         * Renders Chart 2: Horizontal Comparison of Current Streak vs Best Streak per Habit
+         */
+        function renderStreakComparisonChart() {
+            const container = document.getElementById('streakComparisonContainer');
+            const recordCountText = document.getElementById('streakRecordCountText');
+
+            if (state.habits.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 py-8 text-center">Agrega hábitos para comparar tus rachas.</p>`;
+                recordCountText.textContent = '';
+                return;
+            }
+
+            const streakData = state.habits.map(h => {
+                const { currentStreak, bestStreak } = calculateHabitStreaks(h);
+                return {
+                    ...h,
+                    currentStreak,
+                    bestStreak,
+                    isAtRecord: currentStreak > 0 && currentStreak >= bestStreak
+                };
+            }).sort((a, b) => b.currentStreak - a.currentStreak || b.bestStreak - a.bestStreak);
+
+            const maxOverallStreak = Math.max(7, ...streakData.map(d => Math.max(d.currentStreak, d.bestStreak)));
+            const recordsActiveCount = streakData.filter(d => d.isAtRecord).length;
+
+            recordCountText.textContent = recordsActiveCount > 0
+                ? `🔥 ${recordsActiveCount} en récord personal`
+                : 'Supera tu marca hoy';
+
+            container.innerHTML = streakData.map(item => {
+                const currWidth = Math.max(4, Math.round((item.currentStreak / maxOverallStreak) * 100));
+                const bestWidth = Math.max(4, Math.round((item.bestStreak / maxOverallStreak) * 100));
+
+                return `
+                    <div class="p-3 rounded-xl bg-slate-50/90 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-base">${item.icon}</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHTML(item.name)}</span>
+                                ${item.isAtRecord ? `<span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">¡Récord!</span>` : ''}
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="font-extrabold text-orange-500">${item.currentStreak}d actual</span>
+                                <span class="text-slate-400">/</span>
+                                <span class="font-semibold text-slate-500 dark:text-slate-400">${item.bestStreak}d mejor</span>
+                            </div>
+                        </div>
+
+                        <!-- Dual Bar Track -->
+                        <div class="relative h-3 w-full bg-slate-100 dark:bg-slate-900 rounded-full overflow-hidden">
+                            <!-- Best Streak Ghost Bar -->
+                            <div class="absolute top-0 left-0 h-full bg-slate-300 dark:bg-slate-700 rounded-full transition-all duration-500" style="width: ${bestWidth}%"></div>
+                            <!-- Current Streak Foreground Bar -->
+                            <div class="absolute top-0 left-0 h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500" style="width: ${currWidth}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        /**
+         * Renders Category Distribution Donut & Breakdown List
+         */
+        function renderCategoryChart(weekDates) {
+            const donutContainer = document.getElementById('categoryDonutContainer');
+            const listContainer = document.getElementById('categoryBreakdownList');
+
+            const categoryColors = {
+                Salud: '#06b6d4',
+                Deporte: '#10b981',
+                Mente: '#6366f1',
+                Productividad: '#f59e0b',
+                Finanzas: '#f43f5e',
+                Creatividad: '#8b5cf6'
+            };
+
+            const activeCategories = CATEGORIES.filter(c => c.id !== 'Todos').map(c => {
+                const catHabits = state.habits.filter(h => h.category === c.id);
+                let completed = 0;
+                let goal = 0;
+                catHabits.forEach(h => {
+                    const st = getHabitWeeklyStats(h, weekDates);
+                    completed += st.completedCount;
+                    goal += st.goalDays;
+                });
+                const percent = goal > 0 ? Math.min(100, Math.round((completed / goal) * 100)) : 0;
+                return {
+                    id: c.id,
+                    label: c.label,
+                    habitCount: catHabits.length,
+                    completed,
+                    goal,
+                    percent,
+                    color: categoryColors[c.id] || '#6366f1'
+                };
+            }).filter(c => c.habitCount > 0);
+
+            if (activeCategories.length === 0) {
+                donutContainer.innerHTML = `<div class="text-xs text-slate-400 text-center">Sin datos</div>`;
+                listContainer.innerHTML = '';
+                return;
+            }
+
+            // Build SVG Multi-segment Donut
+            const radius = 60;
+            const circumference = 2 * Math.PI * radius;
+            let accumulatedFraction = 0;
+            const totalHabitsCount = state.habits.length;
+
+            const segmentsSVG = activeCategories.map(cat => {
+                const fraction = cat.habitCount / totalHabitsCount;
+                const segLength = fraction * circumference;
+                const dashArray = `${Math.max(0, segLength - 4)} ${circumference}`;
+                const dashOffset = -accumulatedFraction * circumference;
+                accumulatedFraction += fraction;
+
+                return `<circle
+                    cx="80" cy="80" r="${radius}"
+                    fill="transparent"
+                    stroke="${cat.color}"
+                    stroke-width="16"
+                    stroke-dasharray="${dashArray}"
+                    stroke-dashoffset="${dashOffset}"
+                    stroke-linecap="round"
+                    transform="rotate(-90 80 80)"
+                />`;
+            }).join('');
+
+            const avgCategoryCompletion = Math.round(
+                activeCategories.reduce((acc, c) => acc + c.percent, 0) / activeCategories.length
+            );
+
+            donutContainer.innerHTML = `
+                <svg viewBox="0 0 160 160" class="w-44 h-44">
+                    <circle cx="80" cy="80" r="${radius}" fill="transparent" class="stroke-slate-100 dark:stroke-slate-800" stroke-width="16" />
+                    ${segmentsSVG}
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                    <span class="text-2xl font-extrabold font-display text-slate-900 dark:text-white">${avgCategoryCompletion}%</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Balance</span>
+                </div>
+            `;
+
+            listContainer.innerHTML = activeCategories.map(cat => `
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${cat.color}"></span>
+                            <span class="font-bold text-slate-700 dark:text-slate-200">${cat.label}</span>
+                            <span class="text-[10px] text-slate-400">(${cat.habitCount})</span>
+                        </div>
+                        <span class="font-extrabold text-slate-800 dark:text-white">${cat.percent}%</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-500" style="width: ${cat.percent}%; background-color: ${cat.color}"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * Renders 28-Day Consistency Heatmap & Smart Coach Feedback
+         */
+        function renderHeatmapAndCoach() {
+            const heatmapContainer = document.getElementById('heatmapGridContainer');
+            const scoreBadge = document.getElementById('consistencyScoreBadge');
+            const coachHeadline = document.getElementById('coachHeadline');
+            const coachMessage = document.getElementById('coachMessage');
+
+            const today = getTodayMidnight();
+            const totalHabits = state.habits.length;
+
+            // Gather last 4 weeks (from -3 to 0)
+            const fourWeeksDates = [
+                ...getWeekDates(-3),
+                ...getWeekDates(-2),
+                ...getWeekDates(-1),
+                ...getWeekDates(0)
+            ];
+
+            let activeDaysCount = 0;
+            let evaluatedDaysCount = 0;
+
+            const cellsHTML = fourWeeksDates.map((d, idx) => {
+                const key = formatDateKey(d);
+                const isFuture = d > today;
+                let completed = 0;
+                state.habits.forEach(h => {
+                    if (h.completions && h.completions[key]) completed++;
+                });
+
+                const ratio = totalHabits > 0 ? completed / totalHabits : 0;
+                if (!isFuture) {
+                    evaluatedDaysCount++;
+                    if (ratio >= 0.5) activeDaysCount++;
+                }
+
+                let cellStyle = 'bg-slate-100 dark:bg-slate-800/70 text-slate-400';
+                if (!isFuture && ratio > 0) {
+                    if (ratio >= 0.85) {
+                        cellStyle = 'bg-emerald-500 text-white font-bold shadow-sm shadow-emerald-500/20';
+                    } else if (ratio >= 0.5) {
+                        cellStyle = 'bg-emerald-500/60 text-white font-semibold';
+                    } else {
+                        cellStyle = 'bg-emerald-500/25 text-emerald-700 dark:text-emerald-300';
+                    }
+                }
+
+                const isToday = key === formatDateKey(today);
+
+                return `
+                    <div
+                        title="${DAY_NAMES_FULL[idx % 7]} ${d.getDate()} ${MONTH_NAMES_SHORT[d.getMonth()]}: ${completed}/${totalHabits} hábitos (${Math.round(ratio * 100)}%)"
+                        class="h-9 rounded-lg flex flex-col items-center justify-center text-[11px] transition select-none ${cellStyle} ${isToday ? 'ring-2 ring-indigo-500' : ''} ${isFuture ? 'opacity-35' : ''}"
+                    >
+                        <span>${d.getDate()}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Add Day Headers above the 28-day grid
+            const headerLabels = DAY_NAMES_SHORT.map(day => `
+                <div class="text-center text-[10px] font-bold uppercase text-slate-400 pb-1">${day}</div>
+            `).join('');
+
+            heatmapContainer.innerHTML = headerLabels + cellsHTML;
+
+            // Update Coach Insights
+            const consistencyRate = evaluatedDaysCount > 0
+                ? Math.round((activeDaysCount / evaluatedDaysCount) * 100)
+                : 0;
+
+            if (consistencyRate >= 75) {
+                scoreBadge.textContent = `${consistencyRate}% • Consistencia Élite`;
+                scoreBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20';
+                coachHeadline.textContent = '¡Ritmo sobresaliente! Tus hábitos están consolidados.';
+                coachMessage.textContent = 'Has mantenido más del 75% de días activos en las últimas 4 semanas. Enfócate hoy en proteger tu racha más larga para establecer un nuevo récord personal.';
+            } else if (consistencyRate >= 45) {
+                scoreBadge.textContent = `${consistencyRate}% • Buen Progreso`;
+                scoreBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20';
+                coachHeadline.textContent = 'Buena tracción semanal. Aplica la regla de "nunca fallar dos veces".';
+                coachMessage.textContent = 'Cuando un día sea complicado, cumple al menos una versión mínima de 5 minutos de tu hábito principal para mantener viva la racha.';
+            } else {
+                scoreBadge.textContent = `${consistencyRate}% • En Construcción`;
+                scoreBadge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20';
+                coachHeadline.textContent = 'Empieza pequeño para ganar impulso hoy mismo.';
+                coachMessage.textContent = 'Marca al menos 2 hábitos sencillos el día de hoy. La constancia diaria importa mucho más que la intensidad esporádica.';
+            }
+        }
+
+        /**
+         * Master Render Orchestrator
+         */
+        function renderDashboard() {
+            applyThemeAndSettingsUI();
+            const weekDates = getWeekDates(state.weekOffset);
+            renderWeekHeader(weekDates);
+            renderCategoryFilters();
+            renderKPICards(weekDates);
+            renderHabitsTable(weekDates);
+            renderWeeklyRhythmChart(weekDates);
+            renderStreakComparisonChart();
+            renderCategoryChart(weekDates);
+            renderHeatmapAndCoach();
+        }
+
+        // =================================================================
+        // USER INTERACTIONS & ACTIONS
+        // =================================================================
+
+        /**
+         * Toggles a habit's completion status on a specific dateKey (YYYY-MM-DD)
+         */
+        function toggleHabitCompletion(habitId, dateKey, buttonEl) {
+            const habit = state.habits.find(h => h.id === habitId);
+            if (!habit) return;
+
+            if (!habit.completions) habit.completions = {};
+            const newStatus = !habit.completions[dateKey];
+
+            if (newStatus) {
+                habit.completions[dateKey] = true;
+                playSound('check');
+            } else {
+                delete habit.completions[dateKey];
+                playSound('uncheck');
+            }
+
+            saveToStorage();
+            renderDashboard();
+
+            // Check if all habits for that dateKey are now completed -> Celebrate!
+            if (newStatus && state.habits.length > 0) {
+                const allDoneForDay = state.habits.every(h => h.completions && h.completions[dateKey]);
+                if (allDoneForDay) {
+                    playSound('fanfare');
+                    launchConfetti();
+                    showToast('¡Increíble! Completaste el 100% de tus hábitos del día.', 'ph-trophy', 'text-amber-400');
+                }
+            }
+        }
+
+        /**
+         * Marks all habits for Today as completed
+         */
+        function completeAllToday() {
+            if (state.habits.length === 0) return;
+            const todayKey = formatDateKey(getTodayMidnight());
+            let changed = false;
+
+            state.habits.forEach(h => {
+                if (!h.completions) h.completions = {};
+                if (!h.completions[todayKey]) {
+                    h.completions[todayKey] = true;
+                    changed = true;
+                }
+            });
+
+            if (changed) {
+                state.weekOffset = 0; // Jump to current week if viewing past week
+                saveToStorage();
+                renderDashboard();
+                playSound('fanfare');
+                launchConfetti();
+                showToast('¡Todas las metas de hoy fueron marcadas como completadas!', 'ph-sparkle', 'text-emerald-400');
+            } else {
+                showToast('Ya tienes todos los hábitos de hoy completados.', 'ph-check-circle', 'text-indigo-400');
+            }
+        }
+
+        // =================================================================
+        // ADD / EDIT HABIT MODAL LOGIC
+        // =================================================================
+        function renderModalPickers() {
+            // 1. Quick Presets
+            const presetsContainer = document.getElementById('presetButtonsContainer');
+            presetsContainer.innerHTML = QUICK_PRESETS.map((p, idx) => `
+                <button
+                    type="button"
+                    data-preset-idx="${idx}"
+                    class="preset-btn text-xs font-medium px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-indigo-500/15 dark:bg-slate-800 dark:hover:bg-indigo-500/20 text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-300 border border-slate-200/70 dark:border-slate-700 transition flex items-center gap-1"
+                >
+                    <span>${p.icon}</span>
+                    <span>${p.name}</span>
+                </button>
+            `).join('');
+
+            presetsContainer.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = QUICK_PRESETS[Number(btn.getAttribute('data-preset-idx'))];
+                    if (!preset) return;
+                    document.getElementById('habitNameInput').value = preset.name;
+                    document.getElementById('habitTargetNoteInput').value = preset.note;
+                    document.getElementById('habitCategorySelect').value = preset.category;
+                    document.getElementById('habitGoalDaysInput').value = preset.goalDays;
+                    updateFrequencyLabel(preset.goalDays);
+                    state.selectedIcon = preset.icon;
+                    state.selectedColor = preset.color;
+                    updateIconAndColorPickerSelection();
+                });
+            });
+
+            // 2. Icons Grid
+            const iconContainer = document.getElementById('iconPickerContainer');
+            iconContainer.innerHTML = HABIT_ICONS.map(icon => `
+                <button
+                    type="button"
+                    data-icon="${icon}"
+                    class="icon-option-btn h-10 rounded-lg text-lg flex items-center justify-center transition hover:bg-white dark:hover:bg-slate-700"
+                >
+                    ${icon}
+                </button>
+            `).join('');
+
+            iconContainer.querySelectorAll('.icon-option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.selectedIcon = btn.getAttribute('data-icon');
+                    updateIconAndColorPickerSelection();
+                });
+            });
+
+            // 3. Colors Row
+            const colorContainer = document.getElementById('colorPickerContainer');
+            colorContainer.innerHTML = Object.keys(COLOR_PALETTES).map(colorKey => {
+                const pal = COLOR_PALETTES[colorKey];
+                return `
+                    <button
+                        type="button"
+                        data-color="${colorKey}"
+                        title="${pal.name}"
+                        class="color-option-btn w-8 h-8 rounded-full ${pal.bgLight} transition transform flex items-center justify-center text-white"
+                    >
+                        <i class="ph-bold ph-check text-sm opacity-0"></i>
+                    </button>
+                `;
+            }).join('');
+
+            colorContainer.querySelectorAll('.color-option-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.selectedColor = btn.getAttribute('data-color');
+                    updateIconAndColorPickerSelection();
+                });
+            });
+
+            updateIconAndColorPickerSelection();
+        }
+
+        function updateIconAndColorPickerSelection() {
+            document.querySelectorAll('.icon-option-btn').forEach(btn => {
+                const isSelected = btn.getAttribute('data-icon') === state.selectedIcon;
+                btn.className = `icon-option-btn h-10 rounded-lg text-lg flex items-center justify-center transition ${
+                    isSelected
+                        ? 'bg-indigo-600/15 ring-2 ring-indigo-500 scale-105'
+                        : 'hover:bg-white dark:hover:bg-slate-700 opacity-75 hover:opacity-100'
+                }`;
+            });
+
+            document.querySelectorAll('.color-option-btn').forEach(btn => {
+                const colorKey = btn.getAttribute('data-color');
+                const pal = COLOR_PALETTES[colorKey];
+                const isSelected = colorKey === state.selectedColor;
+                btn.className = `color-option-btn w-8 h-8 rounded-full ${pal.bgLight} transition transform flex items-center justify-center text-white ${
+                    isSelected ? 'ring-4 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-900 scale-110' : 'opacity-70 hover:opacity-100'
+                }`;
+                const checkIcon = btn.querySelector('i');
+                if (checkIcon) {
+                    checkIcon.className = `ph-bold ph-check text-sm ${isSelected ? 'opacity-100' : 'opacity-0'}`;
+                }
+            });
+        }
+
+        function updateFrequencyLabel(val) {
+            const num = Number(val);
+            const label = document.getElementById('frequencyValueLabel');
+            if (num === 7) {
+                label.textContent = '7 días / semana (Todos los días)';
+            } else if (num === 5) {
+                label.textContent = '5 días / semana (Ej. Lunes a Viernes)';
+            } else {
+                label.textContent = `${num} ${num === 1 ? 'día' : 'días'} / semana`;
+            }
+        }
+
+        function openHabitModal(editHabitId = null) {
+            const modal = document.getElementById('habitModal');
+            const titleEl = document.getElementById('modalTitle');
+            const saveBtnText = document.getElementById('saveHabitBtnText');
+            const presetsSection = document.getElementById('quickPresetsSection');
+            const errorEl = document.getElementById('habitFormError');
+            errorEl.classList.add('hidden');
+
+            if (editHabitId) {
+                const habit = state.habits.find(h => h.id === editHabitId);
+                if (!habit) return;
+                titleEl.textContent = 'Editar Hábito';
+                saveBtnText.textContent = 'Guardar Cambios';
+                presetsSection.classList.add('hidden');
+
+                document.getElementById('habitIdInput').value = habit.id;
+                document.getElementById('habitNameInput').value = habit.name;
+                document.getElementById('habitTargetNoteInput').value = habit.targetNote || '';
+                document.getElementById('habitCategorySelect').value = habit.category || 'Salud';
+                document.getElementById('habitGoalDaysInput').value = habit.goalDays || 7;
+                updateFrequencyLabel(habit.goalDays || 7);
+
+                state.selectedIcon = habit.icon || '💧';
+                state.selectedColor = habit.color || 'indigo';
+            } else {
+                titleEl.textContent = 'Nuevo Hábito Diario';
+                saveBtnText.textContent = 'Crear Hábito';
+                presetsSection.classList.remove('hidden');
+
+                document.getElementById('habitIdInput').value = '';
+                document.getElementById('habitNameInput').value = '';
+                document.getElementById('habitTargetNoteInput').value = '';
+                document.getElementById('habitCategorySelect').value = state.selectedCategory !== 'Todos' ? state.selectedCategory : 'Salud';
+                document.getElementById('habitGoalDaysInput').value = 7;
+                updateFrequencyLabel(7);
+
+                state.selectedIcon = '🎯';
+                state.selectedColor = 'indigo';
+            }
+
+            updateIconAndColorPickerSelection();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => document.getElementById('habitNameInput').focus(), 50);
+        }
+
+        function closeHabitModal() {
+            const modal = document.getElementById('habitModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function handleHabitFormSubmit(e) {
+            e.preventDefault();
+            const idInput = document.getElementById('habitIdInput').value.trim();
+            const name = document.getElementById('habitNameInput').value.trim();
+            const targetNote = document.getElementById('habitTargetNoteInput').value.trim();
+            const category = document.getElementById('habitCategorySelect').value;
+            const goalDays = Number(document.getElementById('habitGoalDaysInput').value) || 7;
+            const errorEl = document.getElementById('habitFormError');
+
+            if (!name) {
+                errorEl.textContent = 'Por favor ingresa un nombre para el hábito.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (idInput) {
+                // Edit existing
+                const idx = state.habits.findIndex(h => h.id === idInput);
+                if (idx !== -1) {
+                    state.habits[idx] = {
+                        ...state.habits[idx],
+                        name,
+                        targetNote: targetNote || `Meta: ${goalDays} días/sem`,
+                        category,
+                        goalDays,
+                        icon: state.selectedIcon,
+                        color: state.selectedColor
+                    };
+                    showToast(`Hábito "${name}" actualizado.`, 'ph-pencil-simple', 'text-indigo-400');
+                }
+            } else {
+                // Add new habit
+                const newHabit = {
+                    id: 'hab-' + Date.now(),
+                    name,
+                    targetNote: targetNote || `Meta: ${goalDays} días/sem`,
+                    category,
+                    goalDays,
+                    icon: state.selectedIcon,
+                    color: state.selectedColor,
+                    completions: {}
+                };
+                state.habits.unshift(newHabit);
+                playSound('check');
+                showToast(`Hábito "${name}" agregado a tu panel.`, 'ph-plus-circle', 'text-emerald-400');
+            }
+
+            saveToStorage();
+            closeHabitModal();
+            renderDashboard();
+        }
+
+        // =================================================================
+        // CONFIRMATION MODAL (Delete Habit / Restore Demo Data)
+        // =================================================================
+        function openConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirmModalTitle').textContent = title;
+            document.getElementById('confirmModalMessage').textContent = message;
+            confirmActionCallback = onConfirm;
+            const modal = document.getElementById('confirmModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            confirmActionCallback = null;
+        }
+
+        function promptDeleteHabit(habitId) {
+            const habit = state.habits.find(h => h.id === habitId);
+            if (!habit) return;
+            openConfirmModal(
+                `¿Eliminar "${habit.name}"?`,
+                'Se borrará este hábito junto con su registro de rachas semanales. Esta acción no se puede deshacer.',
+                () => {
+                    state.habits = state.habits.filter(h => h.id !== habitId);
+                    saveToStorage();
+                    renderDashboard();
+                    showToast(`Hábito "${habit.name}" eliminado.`, 'ph-trash', 'text-rose-400');
+                }
+            );
+        }
+
+        function promptResetDemoData() {
+            openConfirmModal(
+                '¿Restaurar hábitos de demostración?',
+                'Se restablecerán los 6 hábitos de ejemplo con rachas preconfiguradas.',
+                () => {
+                    state.habits = generateDefaultDemoHabits();
+                    state.weekOffset = 0;
+                    state.selectedCategory = 'Todos';
+                    saveToStorage();
+                    renderDashboard();
+                    showToast('Datos de demostración restaurados.', 'ph-arrows-counter-clockwise', 'text-indigo-400');
+                }
+            );
+        }
+
+        // =================================================================
+        // SECURITY HELPER
+        // =================================================================
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // =================================================================
+        // INITIALIZATION & EVENT LISTENERS
+        // =================================================================
+        function initApp() {
+            loadFromStorage();
+            renderModalPickers();
+            renderDashboard();
+
+            // Week navigation
+            document.getElementById('prevWeekBtn').addEventListener('click', () => {
+                if (state.weekOffset > -12) {
+                    state.weekOffset--;
+                    renderDashboard();
+                }
+            });
+
+            document.getElementById('nextWeekBtn').addEventListener('click', () => {
+                if (state.weekOffset < 0) {
+                    state.weekOffset++;
+                    renderDashboard();
+                }
+            });
+
+            // Sound & Theme Toggles
+            document.getElementById('soundToggleBtn').addEventListener('click', () => {
+                state.soundEnabled = !state.soundEnabled;
+                saveToStorage();
+                applyThemeAndSettingsUI();
+                showToast(
+                    state.soundEnabled ? 'Efectos de sonido activados' : 'Efectos de sonido silenciados',
+                    state.soundEnabled ? 'ph-speaker-high' : 'ph-speaker-slash',
+                    'text-indigo-400'
+                );
+            });
+
+            document.getElementById('themeToggleBtn').addEventListener('click', () => {
+                state.darkMode = !state.darkMode;
+                saveToStorage();
+                applyThemeAndSettingsUI();
+            });
+
+            // Search Input
+            document.getElementById('searchHabitInput').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value;
+                renderHabitsTable(getWeekDates(state.weekOffset));
+            });
+
+            // Quick Actions
+            document.getElementById('completeAllTodayBtn').addEventListener('click', completeAllToday);
+            document.getElementById('resetDemoDataBtn').addEventListener('click', promptResetDemoData);
+
+            // Chart Mode Switcher (Bars vs Area Trend)
+            const barsBtn = document.getElementById('chartModeBarsBtn');
+            const areaBtn = document.getElementById('chartModeAreaBtn');
+
+            barsBtn.addEventListener('click', () => {
+                state.chartMode = 'bars';
+                barsBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm transition';
+                areaBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition';
+                renderWeeklyRhythmChart(getWeekDates(state.weekOffset));
+            });
+
+            areaBtn.addEventListener('click', () => {
+                state.chartMode = 'area';
+                areaBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-300 shadow-sm transition';
+                barsBtn.className = 'px-3 py-1 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition';
+                renderWeeklyRhythmChart(getWeekDates(state.weekOffset));
+            });
+
+            // Add / Edit Modal Events
+            document.getElementById('openAddModalBtn').addEventListener('click', () => openHabitModal(null));
+            document.getElementById('emptyStateAddBtn').addEventListener('click', () => openHabitModal(null));
+            document.getElementById('closeHabitModalBtn').addEventListener('click', closeHabitModal);
+            document.getElementById('cancelHabitModalBtn').addEventListener('click', closeHabitModal);
+            document.getElementById('habitForm').addEventListener('submit', handleHabitFormSubmit);
+
+            document.getElementById('habitGoalDaysInput').addEventListener('input', (e) => {
+                updateFrequencyLabel(e.target.value);
+            });
+
+            // Confirm Modal Events
+            document.getElementById('cancelConfirmModalBtn').addEventListener('click', closeConfirmModal);
+            document.getElementById('acceptConfirmModalBtn').addEventListener('click', () => {
+                if (typeof confirmActionCallback === 'function') {
+                    confirmActionCallback();
+                }
+                closeConfirmModal();
+            });
+
+            // Close modals on backdrop click or Escape key
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeHabitModal();
+                    closeConfirmModal();
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
