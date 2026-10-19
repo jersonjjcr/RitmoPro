@@ -24,6 +24,6 @@ Los hábitos se guardan en `users/{uid}/habits/{habitId}`. Las reglas de Firesto
 
 ## Compartir progreso
 
-Con la sesión iniciada, usa **Compartir mi semana** para generar una imagen con el porcentaje semanal, el avance de cada día y un mensaje motivador. La imagen se crea en el navegador y no incluye nombres de hábitos ni cambia los datos de Firestore. Si el navegador permite compartir archivos, se abre su menú nativo; de lo contrario, puedes descargar la imagen y publicarla desde tu red social.
+Con la sesión iniciada, usa **Compartir mi semana** para generar una imagen vertical 9:16 con el porcentaje semanal, el avance de cada día, un mensaje motivador y el enlace público de la aplicación. El enlace también se incluye en el texto de compartir cuando el navegador lo admite. La imagen se crea en el navegador y no incluye nombres de hábitos ni cambia los datos de Firestore. Si el navegador permite compartir archivos, se abre su menú nativo; de lo contrario, puedes descargar la imagen y publicarla desde tu red social.
 
 El HTML independiente original se conserva como referencia en `panel_interactivo_de_seguimiento_de_h_bitos.html`.

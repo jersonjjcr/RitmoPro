@@ -235,19 +235,20 @@ export default function Home() {
     ), 0);
     const sharePercent = shareGoal ? Math.min(100, Math.round((shareDone / shareGoal) * 100)) : 0;
     const shareDateRange = `${shareDates[0].toLocaleDateString("es", { day: "numeric", month: "short" })} – ${shareDates[6].toLocaleDateString("es", { day: "numeric", month: "short" })}`;
+    const pageUrl = window.location.origin;
     setShareImageUrl("");
     setShareError("");
 
     const canvas = document.createElement("canvas");
     canvas.width = 1080;
-    canvas.height = 1350;
+    canvas.height = 1920;
     const context = canvas.getContext("2d");
     if (!context) {
       setShareError("No se pudo preparar la imagen en este navegador.");
       return;
     }
 
-    const background = context.createLinearGradient(0, 0, 1080, 1350);
+    const background = context.createLinearGradient(0, 0, 1080, 1920);
     background.addColorStop(0, "#123c31");
     background.addColorStop(1, "#176b55");
     context.fillStyle = background;
@@ -257,42 +258,42 @@ export default function Home() {
     context.arc(1000, 170, 250, 0, Math.PI * 2);
     context.fill();
     context.beginPath();
-    context.arc(40, 1270, 230, 0, Math.PI * 2);
+    context.arc(40, 1730, 230, 0, Math.PI * 2);
     context.fill();
 
     context.fillStyle = "#b8e1c8";
     context.font = "700 27px Arial, sans-serif";
-    context.fillText("RITMOPRO", 78, 100);
+    context.fillText("RITMOPRO", 78, 125);
     context.fillStyle = "#ffffff";
     context.font = "700 58px Arial, sans-serif";
-    context.fillText("Mi resumen semanal", 78, 200);
+    context.fillText("Mi resumen semanal", 78, 240);
     context.fillStyle = "#c4dbcf";
     context.font = "400 28px Arial, sans-serif";
-    context.fillText(shareDateRange, 80, 250);
+    context.fillText(shareDateRange, 80, 295);
 
     context.fillStyle = "#ffffff";
-    context.fillRect(64, 300, 952, 930);
+    context.fillRect(64, 360, 952, 1200);
     context.fillStyle = "#168a70";
     context.font = "700 144px Arial, sans-serif";
-    context.fillText(`${sharePercent}%`, 112, 490);
+    context.fillText(`${sharePercent}%`, 112, 550);
     context.fillStyle = "#52645a";
     context.font = "700 27px Arial, sans-serif";
-    context.fillText("DE MIS METAS SEMANALES", 118, 545);
+    context.fillText("DE MIS METAS SEMANALES", 118, 605);
     context.fillStyle = "#75837a";
     context.font = "400 24px Arial, sans-serif";
-    context.fillText(`${shareDone} registros · meta semanal: ${shareGoal}`, 118, 590);
+    context.fillText(`${shareDone} registros · meta semanal: ${shareGoal}`, 118, 655);
 
     context.fillStyle = "#e8f2eb";
-    context.fillRect(118, 620, 844, 12);
+    context.fillRect(118, 700, 844, 12);
     context.fillStyle = "#168a70";
-    context.fillRect(118, 620, 844 * sharePercent / 100, 12);
+    context.fillRect(118, 700, 844 * sharePercent / 100, 12);
 
     context.fillStyle = "#26382e";
     context.font = "600 29px Arial, sans-serif";
     const message = shareMessage(sharePercent, habits.length);
     const words = message.split(" ");
     let line = "";
-    let lineY = 710;
+    let lineY = 805;
     for (const word of words) {
       const candidate = line ? `${line} ${word}` : word;
       if (context.measureText(candidate).width > 800 && line) {
@@ -307,10 +308,10 @@ export default function Home() {
 
     context.fillStyle = "#738278";
     context.font = "700 19px Arial, sans-serif";
-    context.fillText("MI RITMO DÍA A DÍA", 118, 830);
+    context.fillText("MI RITMO DÍA A DÍA", 118, 1040);
     const dayLabels = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
-    const barTop = 870;
-    const barHeight = 210;
+    const barTop = 1085;
+    const barHeight = 260;
     const columnWidth = 92;
     const columnGap = 25;
     shareDates.forEach((date, index) => {
@@ -325,16 +326,30 @@ export default function Home() {
       context.fillStyle = "#43564a";
       context.font = "700 20px Arial, sans-serif";
       context.textAlign = "center";
-      context.fillText(dayLabels[index], x + columnWidth / 2, 1120);
+      context.fillText(dayLabels[index], x + columnWidth / 2, 1390);
       context.fillStyle = "#78867d";
       context.font = "400 18px Arial, sans-serif";
-      context.fillText(`${completed}/${habits.length}`, x + columnWidth / 2, 1155);
+      context.fillText(`${completed}/${habits.length}`, x + columnWidth / 2, 1430);
     });
     context.textAlign = "left";
 
     context.fillStyle = "#a9d6b9";
     context.font = "600 21px Arial, sans-serif";
-    context.fillText("Un día a la vez · RitmoPro", 118, 1190);
+    context.textAlign = "center";
+    context.font = "700 22px Arial, sans-serif";
+    context.fillText("COMPARTE TU AVANCE · INSPIRA A ALGUIEN MÁS", 540, 1695);
+    let linkFontSize = 25;
+    context.font = `600 ${linkFontSize}px Arial, sans-serif`;
+    while (context.measureText(pageUrl).width > 900 && linkFontSize > 15) {
+      linkFontSize -= 1;
+      context.font = `600 ${linkFontSize}px Arial, sans-serif`;
+    }
+    context.fillStyle = "#ffffff";
+    context.fillText(pageUrl, 540, 1750);
+    context.fillStyle = "#a9d6b9";
+    context.font = "600 21px Arial, sans-serif";
+    context.fillText("Un día a la vez · RitmoPro", 540, 1820);
+    context.textAlign = "left";
 
     canvas.toBlob((blob) => {
       if (!blob) {
@@ -432,7 +447,7 @@ export default function Home() {
         await navigator.share({
           files: [file],
           title: "Mi resumen semanal de RitmoPro",
-          text: "Un día a la vez. Este fue mi ritmo esta semana.",
+          text: `Un día a la vez. Este fue mi ritmo esta semana.\n${window.location.origin}`,
         });
       } else {
         const downloadLink = document.createElement("a");
