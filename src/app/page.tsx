@@ -561,7 +561,7 @@ export default function Home() {
 
   return (
     <main className="app-shell" data-theme={theme}>
-      <header className="topbar">
+      <header className={`topbar ${accountMenuOpen ? "menu-expanded" : ""}`}>
         <a className="brand" href="#inicio" aria-label="RitmoPro inicio"><span className="brand-icon"><Flame size={21} fill="currentColor" /></span><span>ritmo<span>pro</span></span></a>
         <div className="topbar-right"><span className="signed-in"><span className="online-dot" /> Guardado en Firebase</span><div className="account"><span className="avatar">{user.photoURL ? <img src={user.photoURL} alt="" /> : user.displayName?.[0] ?? "U"}</span><span className="account-name">{user.displayName?.split(" ")[0] ?? "Mi cuenta"}</span><div className="account-menu" ref={accountMenuRef}><button className="icon-button menu-button" title="Abrir menú" aria-label="Abrir menú" aria-expanded={accountMenuOpen} aria-haspopup="true" onClick={() => setAccountMenuOpen((open) => !open)}><Menu size={19} /></button>{accountMenuOpen && <div className="account-menu-panel" role="menu"><p className="account-menu-heading">Configuración</p><button className="account-menu-item" role="menuitemcheckbox" aria-checked={theme === "dark"} onClick={toggleTheme}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}<span>Modo oscuro<small>{theme === "dark" ? "Activado" : "Desactivado"}</small></span><span className={`theme-switch ${theme === "dark" ? "enabled" : ""}`} aria-hidden="true"><i /></span></button><div className="account-menu-divider" /><button className="account-menu-item signout-menu-item" role="menuitem" onClick={handleSignOut}><LogOut size={17} /><span>Cerrar sesión</span></button></div>}</div></div></div>
       </header>

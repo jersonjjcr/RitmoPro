@@ -358,6 +358,12 @@ td.today-column { background: #f5faf6; }
 @media (max-width: 620px) {
   .topbar { height: 62px; padding: 0 16px; }
   .brand { font-size: 18px; }.topbar-right { gap: 10px; }.signed-in { font-size: 0; gap: 0; }.signed-in .online-dot { margin-right: 2px; }.account { gap: 7px; }.account-name { display: none; }
+  .topbar.menu-expanded { height: auto; min-height: 62px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
+  .topbar.menu-expanded .topbar-right { width: 100%; justify-content: flex-end; }
+  .topbar.menu-expanded .account { width: 100%; flex-wrap: wrap; justify-content: flex-end; }
+  .topbar.menu-expanded .account-menu { width: 100%; display: flex; justify-content: flex-end; }
+  .topbar.menu-expanded .menu-button { display: none; }
+  .topbar.menu-expanded .account-menu-panel { position: static; width: 100%; box-shadow: none; animation: none; }
   .page-content { width: calc(100% - 28px); padding-top: 25px; }
   .welcome-row { align-items: flex-start; flex-direction: column; gap: 15px; margin-bottom: 19px; }
   .welcome-row h1 { font-size: 25px; }.welcome-actions { width: 100%; flex-direction: column-reverse; }.welcome-actions .primary-button, .welcome-actions .secondary-button { width: 100%; }
