@@ -26,12 +26,14 @@ import {
   CheckCheck,
   ChevronDown,
   CircleHelp,
+  Download,
   Flame,
   LogOut,
   Menu,
   Moon,
   Plus,
   Search,
+  Share2,
   Sparkles,
   Sun,
   Target,
@@ -81,6 +83,14 @@ function dateKey(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function shareMessage(percent: number, habitCount: number) {
+  if (!habitCount) return "Todo gran cambio comienza con una decisión. La tuya puede ser hoy.";
+  if (percent >= 100) return "¡Semana cumplida! Tu constancia está construyendo algo grande.";
+  if (percent >= 70) return "Tu esfuerzo suma. Sigue avanzando a tu propio ritmo.";
+  if (percent >= 35) return "Cada paso cuenta. Lo importante es volver a intentarlo.";
+  return "No necesitas una semana perfecta: cada nuevo día es otra oportunidad.";
 }
 
 function weekDates(offset: number) {
@@ -143,6 +153,10 @@ export default function Home() {
   const [error, setError] = useState("");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [shareImageUrl, setShareImageUrl] = useState("");
+  const [shareError, setShareError] = useState("");
+  const [sharing, setSharing] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -210,6 +224,137 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    if (!shareModalOpen) return;
+    let cancelled = false;
+    let imageUrl = "";
+    const shareDates = weekDates(weekOffset);
+    const shareGoal = habits.reduce((total, habit) => total + habit.goalDays, 0);
+    const shareDone = habits.reduce((total, habit) => (
+      total + shareDates.filter((date) => habit.completions?.[dateKey(date)]).length
+    ), 0);
+    const sharePercent = shareGoal ? Math.min(100, Math.round((shareDone / shareGoal) * 100)) : 0;
+    const shareDateRange = `${shareDates[0].toLocaleDateString("es", { day: "numeric", month: "short" })} – ${shareDates[6].toLocaleDateString("es", { day: "numeric", month: "short" })}`;
+    setShareImageUrl("");
+    setShareError("");
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1350;
+    const context = canvas.getContext("2d");
+    if (!context) {
+      setShareError("No se pudo preparar la imagen en este navegador.");
+      return;
+    }
+
+    const background = context.createLinearGradient(0, 0, 1080, 1350);
+    background.addColorStop(0, "#123c31");
+    background.addColorStop(1, "#176b55");
+    context.fillStyle = background;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "rgba(255,255,255,.045)";
+    context.beginPath();
+    context.arc(1000, 170, 250, 0, Math.PI * 2);
+    context.fill();
+    context.beginPath();
+    context.arc(40, 1270, 230, 0, Math.PI * 2);
+    context.fill();
+
+    context.fillStyle = "#b8e1c8";
+    context.font = "700 27px Arial, sans-serif";
+    context.fillText("RITMOPRO", 78, 100);
+    context.fillStyle = "#ffffff";
+    context.font = "700 58px Arial, sans-serif";
+    context.fillText("Mi resumen semanal", 78, 200);
+    context.fillStyle = "#c4dbcf";
+    context.font = "400 28px Arial, sans-serif";
+    context.fillText(shareDateRange, 80, 250);
+
+    context.fillStyle = "#ffffff";
+    context.fillRect(64, 300, 952, 930);
+    context.fillStyle = "#168a70";
+    context.font = "700 144px Arial, sans-serif";
+    context.fillText(`${sharePercent}%`, 112, 490);
+    context.fillStyle = "#52645a";
+    context.font = "700 27px Arial, sans-serif";
+    context.fillText("DE MIS METAS SEMANALES", 118, 545);
+    context.fillStyle = "#75837a";
+    context.font = "400 24px Arial, sans-serif";
+    context.fillText(`${shareDone} registros · meta semanal: ${shareGoal}`, 118, 590);
+
+    context.fillStyle = "#e8f2eb";
+    context.fillRect(118, 620, 844, 12);
+    context.fillStyle = "#168a70";
+    context.fillRect(118, 620, 844 * sharePercent / 100, 12);
+
+    context.fillStyle = "#26382e";
+    context.font = "600 29px Arial, sans-serif";
+    const message = shareMessage(sharePercent, habits.length);
+    const words = message.split(" ");
+    let line = "";
+    let lineY = 710;
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (context.measureText(candidate).width > 800 && line) {
+        context.fillText(line, 118, lineY);
+        line = word;
+        lineY += 43;
+      } else {
+        line = candidate;
+      }
+    }
+    if (line) context.fillText(line, 118, lineY);
+
+    context.fillStyle = "#738278";
+    context.font = "700 19px Arial, sans-serif";
+    context.fillText("MI RITMO DÍA A DÍA", 118, 830);
+    const dayLabels = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
+    const barTop = 870;
+    const barHeight = 210;
+    const columnWidth = 92;
+    const columnGap = 25;
+    shareDates.forEach((date, index) => {
+      const completed = habits.filter((habit) => habit.completions?.[dateKey(date)]).length;
+      const percent = habits.length ? Math.round(completed / habits.length * 100) : 0;
+      const x = 123 + index * (columnWidth + columnGap);
+      const height = Math.max(8, barHeight * percent / 100);
+      context.fillStyle = "#edf3ee";
+      context.fillRect(x, barTop, columnWidth, barHeight);
+      context.fillStyle = "#168a70";
+      context.fillRect(x, barTop + barHeight - height, columnWidth, height);
+      context.fillStyle = "#43564a";
+      context.font = "700 20px Arial, sans-serif";
+      context.textAlign = "center";
+      context.fillText(dayLabels[index], x + columnWidth / 2, 1120);
+      context.fillStyle = "#78867d";
+      context.font = "400 18px Arial, sans-serif";
+      context.fillText(`${completed}/${habits.length}`, x + columnWidth / 2, 1155);
+    });
+    context.textAlign = "left";
+
+    context.fillStyle = "#a9d6b9";
+    context.font = "600 21px Arial, sans-serif";
+    context.fillText("Un día a la vez · RitmoPro", 118, 1190);
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        if (!cancelled) setShareError("No se pudo generar la imagen. Inténtalo de nuevo.");
+        return;
+      }
+      imageUrl = URL.createObjectURL(blob);
+      if (cancelled) {
+        URL.revokeObjectURL(imageUrl);
+      } else {
+        setShareImageUrl(imageUrl);
+      }
+    }, "image/png");
+
+    return () => {
+      cancelled = true;
+      if (imageUrl) URL.revokeObjectURL(imageUrl);
+    };
+  }, [shareModalOpen, weekOffset, habits]);
+
   const dates = useMemo(() => weekDates(weekOffset), [weekOffset]);
   const todayKey = dateKey(new Date());
   const filteredHabits = habits.filter((habit) => {
@@ -273,6 +418,45 @@ export default function Home() {
     } catch (signOutError) {
       setError(friendlyError(signOutError));
     }
+  }
+
+  async function shareWeeklyImage() {
+    if (!shareImageUrl) return;
+    setSharing(true);
+    setShareError("");
+    try {
+      const response = await fetch(shareImageUrl);
+      const image = await response.blob();
+      const file = new File([image], "ritmopro-resumen-semanal.png", { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: "Mi resumen semanal de RitmoPro",
+          text: "Un día a la vez. Este fue mi ritmo esta semana.",
+        });
+      } else {
+        const downloadLink = document.createElement("a");
+        downloadLink.href = shareImageUrl;
+        downloadLink.download = file.name;
+        downloadLink.click();
+        setToast("Imagen descargada; ya puedes compartirla en tus redes.");
+      }
+    } catch (shareFailure) {
+      if (!(shareFailure instanceof DOMException && shareFailure.name === "AbortError")) {
+        setShareError("No se pudo compartir la imagen. Prueba descargándola.");
+      }
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  function downloadWeeklyImage() {
+    if (!shareImageUrl) return;
+    const downloadLink = document.createElement("a");
+    downloadLink.href = shareImageUrl;
+    downloadLink.download = "ritmopro-resumen-semanal.png";
+    downloadLink.click();
+    setToast("Imagen descargada.");
   }
 
   function startCreate() {
@@ -383,7 +567,7 @@ export default function Home() {
       </header>
 
       <div className="page-content" id="inicio">
-        <section className="welcome-row"><div><p className="eyebrow">PANEL DE HÁBITOS · {new Date().toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" })}</p><h1>Buen ritmo, <span>{user.displayName?.split(" ")[0] ?? "vamos"}.</span></h1><p className="welcome-copy">La consistencia se construye con lo que haces hoy.</p></div><button className="primary-button" onClick={startCreate}><Plus size={18} /> Nuevo hábito</button></section>
+        <section className="welcome-row"><div><p className="eyebrow">PANEL DE HÁBITOS · {new Date().toLocaleDateString("es", { weekday: "long", day: "numeric", month: "long" })}</p><h1>Buen ritmo, <span>{user.displayName?.split(" ")[0] ?? "vamos"}.</span></h1><p className="welcome-copy">La consistencia se construye con lo que haces hoy.</p></div><div className="welcome-actions"><button className="secondary-button share-week-button" onClick={() => setShareModalOpen(true)}><Share2 size={17} /> Compartir mi semana</button><button className="primary-button" onClick={startCreate}><Plus size={18} /> Nuevo hábito</button></div></section>
 
         {error && <div className="inline-error">{error}<button aria-label="Cerrar" onClick={() => setError("")}><X size={16} /></button></div>}
 
@@ -420,6 +604,7 @@ export default function Home() {
       </div>
 
       {modalOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setModalOpen(false); }}><section className="habit-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><header><div><span className="section-mark"><Plus size={18} /></span><div><h2 id="modal-title">{editingId ? "Editar hábito" : "Nuevo hábito"}</h2><p>Una intención clara hace más fácil volver a ella.</p></div></div><button className="icon-button" aria-label="Cerrar" onClick={() => setModalOpen(false)}><X size={19} /></button></header><form onSubmit={saveHabit}><label className="form-field">Nombre del hábito<input autoFocus maxLength={48} required placeholder="Ej. Leer 20 páginas" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} /></label><div className="form-row"><label className="form-field">Detalle o meta<input maxLength={50} placeholder="Ej. 30 minutos" value={form.targetNote} onChange={(event) => setForm({ ...form, targetNote: event.target.value })} /></label><label className="form-field">Área<select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>{categories.map((category) => <option key={category}>{category}</option>)}</select></label></div><label className="form-field frequency-field">Frecuencia semanal <span>{form.goalDays} {form.goalDays === 1 ? "día" : "días"}</span><input type="range" min="1" max="7" value={form.goalDays} onChange={(event) => setForm({ ...form, goalDays: Number(event.target.value) })} /></label><fieldset className="choice-field"><legend>Ícono</legend><div className="icon-options">{iconChoices.map((icon) => <button type="button" key={icon} className={form.icon === icon ? "choice-selected" : ""} onClick={() => setForm({ ...form, icon })}>{icon}</button>)}</div></fieldset><fieldset className="choice-field"><legend>Color</legend><div className="color-options">{palette.map((color) => <button type="button" key={color} aria-label={`Color ${color}`} className={form.color === color ? "color-selected" : ""} style={{ backgroundColor: color }} onClick={() => setForm({ ...form, color })}>{form.color === color && <Check size={14} />}</button>)}</div></fieldset>{error && <p className="error-message">{error}</p>}<div className="modal-actions"><button className="secondary-button" type="button" onClick={() => setModalOpen(false)}>Cancelar</button><button className="primary-button" disabled={busy} type="submit">{busy ? "Guardando..." : editingId ? "Guardar cambios" : "Crear hábito"}</button></div></form></section></div>}
+      {shareModalOpen && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShareModalOpen(false); }}><section className="habit-modal share-modal" role="dialog" aria-modal="true" aria-labelledby="share-title"><header><div><span className="section-mark"><Share2 size={18} /></span><div><h2 id="share-title">Comparte tu semana</h2><p>Una imagen con tu avance diario y un mensaje para seguir.</p></div></div><button className="icon-button" aria-label="Cerrar" onClick={() => setShareModalOpen(false)}><X size={19} /></button></header><div className="share-content">{shareImageUrl ? <img className="share-preview" src={shareImageUrl} alt={`Resumen semanal: ${weekPercent}% de las metas cumplidas, del ${dateRange}`} /> : shareError ? <p className="share-error" role="alert">{shareError}</p> : <div className="share-loading"><span className="loader" /><p>Preparando tu imagen...</p></div>}{shareError && shareImageUrl && <p className="share-error" role="alert">{shareError}</p>}</div><div className="share-actions"><button className="secondary-button" disabled={!shareImageUrl || sharing} onClick={downloadWeeklyImage}><Download size={16} /> Descargar imagen</button><button className="primary-button" disabled={!shareImageUrl || sharing} onClick={shareWeeklyImage}><Share2 size={16} /> {sharing ? "Preparando..." : "Compartir"}</button></div></section></div>}
       {toast && <div className="toast"><Check size={16} /> {toast}</div>}
     </main>
   );

@@ -22,4 +22,8 @@ Las variables `NEXT_PUBLIC_FIREBASE_*` son la configuración pública del client
 
 Los hábitos se guardan en `users/{uid}/habits/{habitId}`. Las reglas de Firestore comparan el UID autenticado con el identificador del documento padre para proteger las lecturas y escrituras. Las modificaciones se sincronizan en tiempo real entre sesiones del mismo usuario.
 
+## Compartir progreso
+
+Con la sesión iniciada, usa **Compartir mi semana** para generar una imagen con el porcentaje semanal, el avance de cada día y un mensaje motivador. La imagen se crea en el navegador y no incluye nombres de hábitos ni cambia los datos de Firestore. Si el navegador permite compartir archivos, se abre su menú nativo; de lo contrario, puedes descargar la imagen y publicarla desde tu red social.
+
 El HTML independiente original se conserva como referencia en `panel_interactivo_de_seguimiento_de_h_bitos.html`.
