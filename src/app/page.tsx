@@ -28,15 +28,18 @@ import {
   CircleHelp,
   Flame,
   LogOut,
+  Menu,
+  Moon,
   Plus,
   Search,
   Sparkles,
+  Sun,
   Target,
   Trash2,
   Trophy,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { auth, db, googleProvider, isFirebaseConfigured } from "@/lib/firebase";
 
 type Habit = {
@@ -138,6 +141,36 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const savedTheme = window.localStorage.getItem("ritmopro-theme");
+      if (savedTheme === "light" || savedTheme === "dark") setTheme(savedTheme);
+    } catch {
+      setError("No se pudo cargar la preferencia de tema de este navegador.");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!accountMenuOpen) return;
+    function closeOnOutsideClick(event: PointerEvent) {
+      if (event.target instanceof Node && !accountMenuRef.current?.contains(event.target)) {
+        setAccountMenuOpen(false);
+      }
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setAccountMenuOpen(false);
+    }
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [accountMenuOpen]);
 
   useEffect(() => {
     if (!auth) {
@@ -218,6 +251,27 @@ export default function Home() {
       await signInWithPopup(auth, googleProvider);
     } catch (loginError) {
       setError(friendlyError(loginError));
+    }
+  }
+
+  function toggleTheme() {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    try {
+      window.localStorage.setItem("ritmopro-theme", nextTheme);
+      setError("");
+    } catch {
+      setError("No se pudo guardar la preferencia de tema de este navegador.");
+    }
+  }
+
+  async function handleSignOut() {
+    if (!auth) return;
+    try {
+      await signOut(auth);
+      setAccountMenuOpen(false);
+    } catch (signOutError) {
+      setError(friendlyError(signOutError));
     }
   }
 
@@ -322,10 +376,10 @@ export default function Home() {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-theme={theme}>
       <header className="topbar">
         <a className="brand" href="#inicio" aria-label="RitmoPro inicio"><span className="brand-icon"><Flame size={21} fill="currentColor" /></span><span>ritmo<span>pro</span></span></a>
-        <div className="topbar-right"><span className="signed-in"><span className="online-dot" /> Guardado en Firebase</span><div className="account"><span className="avatar">{user.photoURL ? <img src={user.photoURL} alt="" /> : user.displayName?.[0] ?? "U"}</span><span className="account-name">{user.displayName?.split(" ")[0] ?? "Mi cuenta"}</span><button className="icon-button logout-button" title="Cerrar sesión" onClick={() => auth && signOut(auth)}><LogOut size={17} /></button></div></div>
+        <div className="topbar-right"><span className="signed-in"><span className="online-dot" /> Guardado en Firebase</span><div className="account"><span className="avatar">{user.photoURL ? <img src={user.photoURL} alt="" /> : user.displayName?.[0] ?? "U"}</span><span className="account-name">{user.displayName?.split(" ")[0] ?? "Mi cuenta"}</span><div className="account-menu" ref={accountMenuRef}><button className="icon-button menu-button" title="Abrir menú" aria-label="Abrir menú" aria-expanded={accountMenuOpen} aria-haspopup="true" onClick={() => setAccountMenuOpen((open) => !open)}><Menu size={19} /></button>{accountMenuOpen && <div className="account-menu-panel" role="menu"><p className="account-menu-heading">Configuración</p><button className="account-menu-item" role="menuitemcheckbox" aria-checked={theme === "dark"} onClick={toggleTheme}>{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}<span>Modo oscuro<small>{theme === "dark" ? "Activado" : "Desactivado"}</small></span><span className={`theme-switch ${theme === "dark" ? "enabled" : ""}`} aria-hidden="true"><i /></span></button><div className="account-menu-divider" /><button className="account-menu-item signout-menu-item" role="menuitem" onClick={handleSignOut}><LogOut size={17} /><span>Cerrar sesión</span></button></div>}</div></div></div>
       </header>
 
       <div className="page-content" id="inicio">
